@@ -28,7 +28,7 @@ Bundle-ID `de.linolaske.carbstock`, iCloud-Container `iCloud.de.linolaske.carbst
 - **Buchungen sind unveränderlich.** Bestand ist immer Σ delta. Korrektur = `reversal`/`adjust`.
 - Geld in Cent (Int), Mengen in Int der Basiseinheit, Carbs als Double; Rundung nur in der Anzeige.
 - Rechenlogik gehört in `CarbStockCore` und wird dort test-first geschrieben (Testvektoren der Spec als Tests).
-- Keine Deploys, kein TestFlight-Upload, keine App-Store-Einreichung, keine CloudKit-Schema-Promotion nach Production, keine Nachricht an Apple: das macht der Maintainer.
+- Keine Deploys, keine App-Store-Veröffentlichung, keine CloudKit-Schema-Promotion nach Production, keine Nachricht an Apple: das macht der Maintainer. TestFlight-Uploads sind nach bestandenen Prüfungen erlaubt; externe Gruppen zuordnen und zur Beta-Prüfung einreichen bleibt beim Maintainer.
 - Userdaten und Secrets nie in Logs, Commits oder externe Dienste.
 
 ## Lizenz

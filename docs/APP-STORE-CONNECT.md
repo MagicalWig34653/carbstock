@@ -1,7 +1,7 @@
 # App Store Connect und Developer-Portal – was Lino anlegt
 
 **Zeitpunkt: ab sofort möglich.** Name, Bundle-ID und iCloud-Container sind festgelegt und ändern sich nicht mehr; das Grundgerüst baut. Das Anlegen veröffentlicht nichts.
-Agenten legen hier nichts an (Linos Konto, Außenwirkung).
+Agenten legen hier nichts an (Linos Konto, Außenwirkung). Ausnahme: TestFlight-Uploads nach bestandenen Prüfungen; externe Gruppen zuordnen, Beta-Prüfung einreichen und die App-Store-Veröffentlichung bleiben bei Lino.
 
 ## Stand 21.11.2026: App ID und Container registriert
 Lino hat ausdrücklich erlaubt, die Bundle-ID per Xcode/automatischer Signierung zu registrieren. Ein signierter Gerätebuild
@@ -40,4 +40,4 @@ Alternative: Projekt in Xcode öffnen (`xcodegen generate`, dann `CarbStock.xcod
 
 ## Was danach freigeschaltet wird
 - Signierte Gerätebuilds mit iCloud → **Spike S1** (Sync auf zwei Geräten) und **S3** (Benachrichtigungen auf dem Gerät).
-- TestFlight-Builds (Upload nur nach Linos Regeln für TestFlight-Freigaben).
+- TestFlight-Builds: Upload nach bestandenen Prüfungen durch die Agenten-Hauptsession; externe Gruppen und Beta-Prüfung durch Lino.
