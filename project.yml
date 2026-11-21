@@ -1,0 +1,74 @@
+name: CarbStock
+options:
+  bundleIdPrefix: de.linolaske
+  developmentLanguage: de
+  deploymentTarget:
+    iOS: "26.0"
+packages:
+  CarbStockCore:
+    path: Packages/CarbStockCore
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    GENERATE_INFOPLIST_FILE: YES
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: J2DU2P47XW
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_EMIT_LOC_STRINGS: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    CARBSTOCK_CLOUDKIT: "YES"
+targets:
+  CarbStock:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    dependencies:
+      - package: CarbStockCore
+        product: CarbStockCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.linolaske.carbstock
+        PRODUCT_NAME: CarbStock
+        # iPhone first (O-04). iPad = "2" later, if it costs nothing extra.
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_ENTITLEMENTS: App/CarbStock.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_CFBundleDisplayName: CarbStock
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
+        # Only Apple system frameworks (CloudKit/TLS): exempt encryption.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+    info:
+      path: App/Info.plist
+      properties:
+        # CloudKit delivers silent change notifications (spec 9.1).
+        UIBackgroundModes: [remote-notification]
+        # NO for unsigned builds (no iCloud entitlement): CloudKit would trap at start.
+        CarbStockCloudKitEnabled: $(CARBSTOCK_CLOUDKIT)
+  CarbStockTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - AppTests
+    dependencies:
+      - target: CarbStock
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.linolaske.carbstock.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  CarbStock:
+    build:
+      targets:
+        CarbStock: all
+        CarbStockTests: [test]
+    test:
+      targets:
+        - CarbStockTests
+      commandLineArguments:
+        "-CarbStockInMemory": true

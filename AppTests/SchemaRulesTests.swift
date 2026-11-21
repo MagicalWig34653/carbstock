@@ -1,0 +1,83 @@
+import SwiftData
+import Testing
+@testable import CarbStock
+
+/// CloudKit schema rules (spec 9.2) and privacy rule AC-D4, checked by introspecting the real schema.
+@Suite struct SchemaRulesTests {
+    static let inventory = Schema(Stores.inventoryTypes)
+    static let training = Schema(Stores.trainingTypes)
+    static let all = Schema(Stores.inventoryTypes + Stores.trainingTypes)
+
+    @Test func noUniqueConstraints() {
+        for entity in Self.all.entities {
+            #expect(entity.uniquenessConstraints.isEmpty, "\(entity.name) has uniqueness constraints")
+            for attribute in entity.attributes {
+                #expect(!attribute.isUnique, "\(entity.name).\(attribute.name) is unique")
+            }
+        }
+    }
+
+    // Schema.Attribute does not expose default values, so a "has a default" check is not possible
+    // by introspection. What CloudKit needs is "optional or default": checked here as far as visible
+    // (relationships must be optional with an inverse and no .deny); defaults are exercised by
+    // StoresTests, which saves models created through their initialisers.
+    @Test func relationshipsAreOptionalWithInverseAndNotDeny() {
+        for entity in Self.all.entities {
+            for relationship in entity.relationships {
+                #expect(relationship.isOptional, "\(entity.name).\(relationship.name) is not optional")
+                #expect(relationship.inverseName != nil, "\(entity.name).\(relationship.name) has no inverse")
+                #expect(relationship.deleteRule != .deny, "\(entity.name).\(relationship.name) uses .deny")
+            }
+        }
+    }
+
+    @Test func noForbiddenFieldNames() {
+        let forbidden = ["weight", "pulse", "heart", "power", "watt", "ftp", "calorie",
+                         "location", "latitude", "longitude", "health"]
+        for entity in Self.all.entities {
+            let names = [entity.name] + entity.attributes.map(\.name) + entity.relationships.map(\.name)
+            for name in names {
+                for word in forbidden {
+                    #expect(!name.lowercased().contains(word), "\(entity.name): '\(name)' contains '\(word)' (AC-D4)")
+                }
+            }
+        }
+    }
+
+    @Test func trainingTypesAreNotInInventoryConfiguration() {
+        let inventoryNames = Set(Self.inventory.entities.map(\.name))
+        let trainingNames = Set(Self.training.entities.map(\.name))
+        #expect(!trainingNames.isEmpty)
+        #expect(inventoryNames.isDisjoint(with: trainingNames))
+        // No relationship may cross configurations.
+        for entity in Self.training.entities {
+            for relationship in entity.relationships {
+                #expect(trainingNames.contains(relationship.destination), "\(entity.name) points outside Training")
+            }
+        }
+        for entity in Self.inventory.entities {
+            for relationship in entity.relationships {
+                #expect(inventoryNames.contains(relationship.destination), "\(entity.name) points outside Inventory")
+            }
+        }
+    }
+
+    /// M5 added fields to two existing records: additive means optional (or defaulted), nothing renamed or removed.
+    @Test func m5FieldsAreAdditiveAndOptional() throws {
+        func attributes(_ name: String) throws -> [String: Schema.Attribute] {
+            let entity = try #require(Self.inventory.entities.first { $0.name == name })
+            return Dictionary(uniqueKeysWithValues: entity.attributes.map { ($0.name, $0) })
+        }
+        let item = try attributes("ShoppingListItem")
+        for name in ["expiryDay", "offerJSON", "batchID"] { #expect(item[name]?.isOptional == true, "ShoppingListItem.\(name)") }
+        // unchanged since M0: the original fields are all still there
+        for name in ["id", "productID", "freeText", "plannedQuantity", "estimatedTotalPriceCents", "stateRaw", "createdAt", "schemaVersion"] {
+            #expect(item[name] != nil, "ShoppingListItem.\(name) fehlt")
+        }
+        let evaluation = try attributes("PurchaseEvaluation")
+        #expect(evaluation["verdictQuantity"]?.isOptional == true)
+        for name in ["id", "inputJSON", "verdictRaw", "reasonsJSON", "userDecisionRaw", "createdAt", "schemaVersion"] {
+            #expect(evaluation[name] != nil, "PurchaseEvaluation.\(name) fehlt")
+        }
+    }
+}

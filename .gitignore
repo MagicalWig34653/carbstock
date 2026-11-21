@@ -1,0 +1,11 @@
+.DS_Store
+*.xcodeproj/
+build/
+.build/
+DerivedData/
+xcuserdata/
+*.xcresult
+.swiftpm/
+.todolino.json
+CLAUDE.local.md
+intern/
