@@ -73,6 +73,44 @@ import Testing
         #expect(a == b && a?.name == "Gel" && a?.brand == nil && a?.carbsPerBaseUnit == 25)
     }
 
+    @Test func flavorFlowsFromNewProductThroughSnapshotToDraft() throws {
+        var d = gelDraft()
+        d.newProduct.name = "Gel"; d.newProduct.flavor = " Zitrone "
+        let info = try #require(d.productInfo(existing: nil))
+        #expect(info.flavor == "Zitrone")
+        d.newProduct.flavor = " "
+        #expect(d.productInfo(existing: nil)?.flavor == nil)
+    }
+
+    /// Verlauf und Einkaufsliste aus der Version ohne Geschmack (Feld fehlt im JSON) bleiben lesbar.
+    @Test func oldOfferSnapshotWithoutFlavorStillDecodes() throws {
+        let json = #"{"productID":"6F9619FF-8B86-D011-B42D-00C04FC964FF","isNewProduct":true,"productName":"Gel","categoryRaw":"gel","baseUnitRaw":"piece","portionAmount":1,"carbsPerPortionG":25,"quantity":10,"horizonDays":84,"bargainRule":false}"#
+        let s = try JSONDecoder().decode(OfferSnapshot.self, from: Data(json.utf8))
+        #expect(s.flavor == nil && s.productDraft.flavor.isEmpty)
+        var withFlavor = s; withFlavor.flavor = "Cola"
+        let back = try JSONDecoder().decode(OfferSnapshot.self, from: try JSONEncoder().encode(withFlavor))
+        #expect(back.productDraft.flavor == "Cola")
+    }
+
+    @Test func additivesFlowFromNewProductThroughSnapshotToDraft() throws {
+        var d = gelDraft()
+        d.newProduct.name = "Gel"; d.newProduct.hasCaffeine = true; d.newProduct.hasLactate = true
+        let info = try #require(d.productInfo(existing: nil))
+        #expect(info.hasCaffeine && info.hasLactate)
+        d.newProduct.hasLactate = false
+        #expect(d.productInfo(existing: nil).map { $0.hasCaffeine && !$0.hasLactate } == true)
+    }
+
+    /// Verlauf aus der Version ohne Zusätze (Felder fehlen im JSON) bleibt lesbar; Zusätze überleben Kodieren/Dekodieren.
+    @Test func oldOfferSnapshotWithoutAdditivesStillDecodes() throws {
+        let json = #"{"productID":"6F9619FF-8B86-D011-B42D-00C04FC964FF","isNewProduct":true,"productName":"Gel","categoryRaw":"gel","baseUnitRaw":"piece","portionAmount":1,"carbsPerPortionG":25,"quantity":10,"horizonDays":84,"bargainRule":false}"#
+        let s = try JSONDecoder().decode(OfferSnapshot.self, from: Data(json.utf8))
+        #expect(s.productDraft.hasCaffeine == false && s.productDraft.hasLactate == false)
+        var with = s; with.hasCaffeine = true; with.hasLactate = true
+        let back = try JSONDecoder().decode(OfferSnapshot.self, from: try JSONEncoder().encode(with))
+        #expect(back.productDraft.hasCaffeine && back.productDraft.hasLactate)
+    }
+
     @Test func moneyRounding() {
         #expect(Money.cents(fromEuro: 0.8) == 80 && Money.cents(fromEuro: 4.9) == 490 && Money.cents(fromEuro: 19.995) == 2000)
         #expect(Money.cents(fromEuro: nil) == nil)

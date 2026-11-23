@@ -101,7 +101,9 @@ Jedes Feature hat eine ID (F-…), auf die Akzeptanzkriterien (Abschnitt 15) ver
 - **Carbs pro € (Original-Formel unklar):** Im Original steht `carbsPerEuro = carbsPerUnit*amount / Preis`, wobei `amount` = Bestandsmenge ist. Das wäre falsch, sobald Bestand schon verbraucht ist. Definition ab jetzt: **Carbs der gekauften Menge ÷ Gesamtpreis dieser Charge**. Angezeigt wird zusätzlich der Kehrwert **€ je 100 g Carbs** (besser vergleichbar). Beide Werte werden **berechnet, nicht gespeichert**.
 - **Verkaufen/einlagern:** „Einlagern“ = Kauf/Zugang, „Verkaufen“ wird als **Abgang** umgesetzt. Annahme: gemeint ist *Verbrauchen/Abgeben*, nicht Handel (**❓ O-22**). Abgangsgründe: verbraucht, verschenkt/verkauft, entsorgt, Korrektur.
 - **Schnellbuchung** über +/- am Produkt bucht immer auf die **Charge mit dem frühesten MHD** (FEFO, siehe 4.2); ein Tippen auf die Chargenzeile erlaubt gezielte Buchung.
-- **Suche/Filter:** Textsuche über Name und Marke; Filter Kategorie, „läuft in ≤ X Tagen ab“, „abgelaufen“, „ohne MHD“, „Bestand 0“ (archiviert).
+- **Geschmack (Lino 23.11.):** Optionales Feld „Geschmack“ am Produkt (Freitext, z. B. Zitrone). Jede Sorte ist ein **eigenes Produkt** mit eigenem Bestand, eigenen Chargen und eigenen Carbs; die Anzeige lautet „Name · Geschmack“. Zwei Sorten desselben Namens und derselben Marke sind **keine Doppelten** (AC-S4). Bei vorhandenen Produkten lässt sich der Geschmack in der Detailansicht nachtragen. Nur das Feld, keine Bewertung, keine Auswertung.
+- **Koffein- und Laktatzusatz (Lino 23.11.):** Zwei getrennte Ja/Nein-Optionen am Produkt, die bei der Kategorie **Gel** gesetzt werden können („Mit Koffein“, „Mit Laktat“), wie der Geschmack: gleiche Marke und gleicher Name mit anderem Zusatz sind **verschiedene Produkte** mit eigenem Bestand. Anzeige „Name · Geschmack · mit Koffein · mit Laktat“, soweit gesetzt. Bewusst **ohne** Mengen, Grenzwerte oder Hinweise (nicht genannt). Beim Wechsel der Kategorie weg von Gel werden die Zusätze beim Anlegen nicht gespeichert.
+- **Suche/Filter:** Textsuche über Name, Marke und Geschmack; Filter Kategorie, „läuft in ≤ X Tagen ab“, „abgelaufen“, „ohne MHD“, „Bestand 0“ (archiviert).
 - **Löschen:** Ein Produkt oder eine Charge mit Buchungen wird **archiviert**, nicht hart gelöscht (Begründung: Abschnitt 9.4). Hartes Löschen nur über „Alle Daten löschen“.
 - **Pflichtfelder:** Name, Kategorie, Basiseinheit, Carbs je Portion (> 0). Optional: Marke, Verhältnis, MHD, Preis. Ohne Preis erscheinen keine €-Kennzahlen; ohne MHD ist die Charge „unbegrenzt“ (grau).
 - **Selbstgemacht:** In V1 ein normales Produkt der Kategorie „Selbstgemacht“ (Carbs je Portion manuell, MHD meist kurz, Preis optional). Rezepte/Drink-Mixer bleiben V2 (Abschnitt 6) **❓ O-14**.
@@ -196,6 +198,8 @@ AppPreferences (Einstellungen)
 |---|---|---|---|
 | `id` | UUID | ja | vom Client erzeugt |
 | `name`, `brand` | Text | Name ja | |
+| `flavor` | Text? | nein | Geschmack, additiv ergänzt (23.11.); fehlt in alten Daten und Sicherungen = kein Geschmack |
+| `hasCaffeine`, `hasLactate` | Bool (Vorgabe false) | nein | Koffein-/Laktatzusatz, additiv ergänzt (23.11.) mit Vorgabewert; fehlt in alten Daten, Sicherungen und Verlauf = nein |
 | `category` | Enum `gel · drink · bar · jelly · homemade` | ja | [Original] |
 | `baseUnit` | Enum `piece · gram` | ja | Stück (Gel/Riegel/Jelly) oder Gramm (Pulver) |
 | `portionAmount` | Zahl > 0, in `baseUnit` | ja | Stück: 1; Pulver: z. B. 40 g je Portion |
@@ -406,7 +410,7 @@ Eingabe: Angebot (Menge `q`, Gesamtpreis `P`, Carbs je Einheit `c`, MHD `e`), Ho
 | Haken „gepackt“ kollidiert | Zustand **abgeleitet** aus Buchungen (5.6), kein änderbares Flag. |
 | Bestand wird negativ (zwei Geräte buchen den letzten Gel ab) | Anzeige „Bestand −1 (Konflikt)“, Hinweis mit Vorschlag „Korrektur buchen“; nie stilles Abschneiden auf 0. |
 | Produkt/Charge-Stammdaten (Name, Carbs, MHD) werden gleichzeitig bearbeitet | selten; „letzter Schreiber gewinnt“ wird akzeptiert. Änderungen an **Carbs je Portion** und **MHD** zeigen im Verlauf `updatedAt`; Warnhinweis, wenn sich beide Werte nach einem Sync unerwartet ändern, ist [Vorschlag]. |
-| Doppelt angelegte Produkte (zwei Geräte, kein Unique-Constraint) | **Zusammenführen** durch den Nutzer (Hinweis bei gleichem Namen+Marke); Buchungen wandern auf das Zielprodukt. |
+| Doppelt angelegte Produkte (zwei Geräte, kein Unique-Constraint) | **Zusammenführen** durch den Nutzer (Hinweis bei gleichem Namen+Marke+Geschmack+Zusätzen); Buchungen wandern auf das Zielprodukt. |
 | Standardwerte doppelt angelegt | **Nicht synchronisiert anlegen**: Standard-Carbs/h liegen im Code, nur Nutzer-Abweichungen sind Datensätze (5.5). |
 | Löschen auf Gerät A, Bearbeiten auf Gerät B | Soft-Delete (`isArchived`), kein hartes Löschen; Archivierung gewinnt und ist umkehrbar. |
 

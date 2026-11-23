@@ -101,7 +101,9 @@ struct ProductRowView: View {
                 .accessibilityLabel(summary.category.title)
             VStack(alignment: .leading, spacing: 3) {
                 Text(summary.name).font(.headline)
-                if let brand = summary.brand { Text(brand).font(.subheadline).foregroundStyle(.secondary) }
+                if let detail = summary.detailLine {
+                    Text(detail).font(.subheadline).foregroundStyle(.secondary)
+                }
                 if summary.isConflict {
                     Label("Bestand \(summary.stock.formatted()) (Konflikt)", systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.red).font(.subheadline)

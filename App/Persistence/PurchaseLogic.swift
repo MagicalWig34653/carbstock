@@ -97,9 +97,10 @@ struct OfferDraft: Equatable, Sendable {
         let p = newProduct
         let brand = p.brand.trimmingCharacters(in: .whitespaces)
         return ProductInfo(id: newProductID, name: p.name.trimmingCharacters(in: .whitespaces),
-                           brand: brand.isEmpty ? nil : brand, category: p.category, baseUnit: p.baseUnit,
+                           brand: brand.isEmpty ? nil : brand, flavor: Flavor.normalised(p.flavor), category: p.category, baseUnit: p.baseUnit,
                            portionAmount: p.effectivePortion, carbsPerPortionG: p.carbsPerPortionG,
-                           glucoseFructoseRatio: p.glucoseFructoseRatio)
+                           glucoseFructoseRatio: p.glucoseFructoseRatio,
+                           hasCaffeine: p.category == .gel && p.hasCaffeine, hasLactate: p.category == .gel && p.hasLactate)
     }
 
     /// Angebotspreis nach Versand und Rabatt (Core `OfferPricing`). Nil ohne Preis oder bei ungültiger Eingabe.
@@ -133,6 +134,11 @@ struct OfferSnapshot: Codable, Equatable, Sendable {
     var isNewProduct: Bool
     var productName: String
     var brand: String?
+    /// Optional: Verlauf und Listen aus der Zeit vor „Geschmack“ haben das Feld nicht.
+    var flavor: String?
+    /// Optional aus demselben Grund: Verlauf aus der Zeit vor den Zusätzen hat die Felder nicht.
+    var hasCaffeine: Bool?
+    var hasLactate: Bool?
     var categoryRaw: String
     var baseUnitRaw: String
     var portionAmount: Double
@@ -154,7 +160,7 @@ struct OfferSnapshot: Codable, Equatable, Sendable {
     /// Produktfelder als Entwurf für „Neues Produkt“ (z. B. beim Kauf aus der Einkaufsliste).
     var productDraft: ProductDraft {
         var d = ProductDraft()
-        d.name = productName; d.brand = brand ?? ""; d.category = category; d.baseUnit = baseUnit
+        d.name = productName; d.brand = brand ?? ""; d.flavor = flavor ?? ""; d.hasCaffeine = hasCaffeine ?? false; d.hasLactate = hasLactate ?? false; d.category = category; d.baseUnit = baseUnit
         d.portionAmount = portionAmount; d.carbsPerPortionG = carbsPerPortionG
         d.glucoseFructoseRatio = glucoseFructoseRatio
         return d

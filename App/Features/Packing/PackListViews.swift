@@ -94,7 +94,7 @@ struct PackListFormView: View {
         let userRates = TrainingService(context: context).userRates()
         let current = resolved(userRates)
         let plan = service.plan(for: current)
-        let names = Dictionary(products.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        let names = Dictionary(products.map { ($0.id, $0.displayName) }, uniquingKeysWith: { a, _ in a })
         NavigationStack {
             Form {
                 Section {
@@ -212,7 +212,7 @@ struct PackListDetailView: View {
     var body: some View {
         let ledger = InventoryService(context: context).ledger()
         let items = service.items(of: list)
-        let names = Dictionary(products.map { ($0.id, $0.name) }, uniquingKeysWith: { a, _ in a })
+        let names = Dictionary(products.map { ($0.id, $0.displayName) }, uniquingKeysWith: { a, _ in a })
         let expiries = Dictionary(products.flatMap { $0.batches ?? [] }.map { ($0.id, $0.expiryDay) }, uniquingKeysWith: { a, _ in a })
         let shortfall = service.shortfallG(of: list)
         List {

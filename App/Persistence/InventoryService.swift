@@ -52,7 +52,8 @@ final class InventoryService {
         let total = batches.reduce(0) { $0 + l.quantity(ofBatch: $1.id) }
         let expiries = withStock.map { $0.expiryDay.flatMap(CalendarDay.init(isoString:)) }
         return ProductSummary(
-            id: product.id, name: product.name, brand: product.brand, category: product.category,
+            id: product.id, name: product.name, brand: product.brand, flavor: product.flavor,
+            hasCaffeine: product.hasCaffeine, hasLactate: product.hasLactate, category: product.category,
             baseUnit: product.baseUnit, isArchived: product.isArchived, stock: total,
             carbsTotalG: Double(total) * product.info.carbsPerBaseUnit,
             earliestExpiry: expiries.compactMap { $0 }.min(), batchesWithStock: expiries)
@@ -67,9 +68,11 @@ final class InventoryService {
         guard problems.isEmpty else { throw Failure.invalid(problems) }
         let brand = draft.brand.trimmingCharacters(in: .whitespaces)
         let product = Product(name: draft.name.trimmingCharacters(in: .whitespaces),
-                              brand: brand.isEmpty ? nil : brand, category: draft.category,
+                              brand: brand.isEmpty ? nil : brand, flavor: Flavor.normalised(draft.flavor), category: draft.category,
                               baseUnit: draft.baseUnit, portionAmount: draft.effectivePortion,
-                              carbsPerPortionG: draft.carbsPerPortionG, glucoseFructoseRatio: draft.glucoseFructoseRatio)
+                              carbsPerPortionG: draft.carbsPerPortionG, glucoseFructoseRatio: draft.glucoseFructoseRatio,
+                              hasCaffeine: draft.category == .gel && draft.hasCaffeine,
+                              hasLactate: draft.category == .gel && draft.hasLactate)
         context.insert(product)
         if draft.quantity > 0 {
             try insertBatch(for: product, quantity: draft.quantity, totalPriceCents: draft.totalPriceCents,
@@ -259,5 +262,30 @@ final class InventoryService {
         batch.isArchived = archived
         batch.updatedAt = now()
         try context.save()
+    }
+
+    /// Geschmack eines vorhandenen Produkts setzen oder entfernen (leer = kein Geschmack).
+    func setFlavor(_ flavor: String, on product: Product) throws {
+        product.flavor = Flavor.normalised(flavor)
+        product.updatedAt = now()
+        try context.save()
+    }
+}
+
+extension InventoryService {
+    /// Koffein- und Laktatzusatz eines vorhandenen Produkts setzen (Ja/Nein, keine Mengen).
+    func setAdditives(caffeine: Bool, lactate: Bool, on product: Product) throws {
+        product.hasCaffeine = caffeine
+        product.hasLactate = lactate
+        product.updatedAt = now()
+        try context.save()
+    }
+}
+
+enum Flavor {
+    /// Getrimmt; leer wird zu nil.
+    static func normalised(_ s: String?) -> String? {
+        guard let t = s?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
+        return t
     }
 }

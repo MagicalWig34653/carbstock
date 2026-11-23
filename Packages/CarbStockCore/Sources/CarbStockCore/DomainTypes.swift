@@ -26,6 +26,8 @@ public struct ProductInfo: Hashable, Sendable, Codable, Identifiable {
     public var id: UUID
     public var name: String
     public var brand: String?
+    /// Geschmacksrichtung (optional). Jede Sorte ist ein eigenes Produkt mit eigenem Bestand.
+    public var flavor: String?
     public var category: ProductCategory
     public var baseUnit: BaseUnit
     /// Base units per portion (piece: 1; powder: e.g. 40 g).
@@ -33,19 +35,52 @@ public struct ProductInfo: Hashable, Sendable, Codable, Identifiable {
     public var carbsPerPortionG: Double
     public var glucoseFructoseRatio: Double?
     public var isArchived: Bool
+    /// Geloption: mit Koffein bzw. mit Laktatzusatz (nur Ja/Nein, keine Mengen).
+    public var hasCaffeine: Bool
+    public var hasLactate: Bool
 
-    public init(id: UUID = UUID(), name: String, brand: String? = nil, category: ProductCategory,
+    public init(id: UUID = UUID(), name: String, brand: String? = nil, flavor: String? = nil, category: ProductCategory,
                 baseUnit: BaseUnit, portionAmount: Double = 1, carbsPerPortionG: Double,
-                glucoseFructoseRatio: Double? = nil, isArchived: Bool = false) {
+                glucoseFructoseRatio: Double? = nil, isArchived: Bool = false,
+                hasCaffeine: Bool = false, hasLactate: Bool = false) {
         self.id = id
         self.name = name
         self.brand = brand
+        self.flavor = flavor
         self.category = category
         self.baseUnit = baseUnit
         self.portionAmount = portionAmount
         self.carbsPerPortionG = carbsPerPortionG
         self.glucoseFructoseRatio = glucoseFructoseRatio
         self.isArchived = isArchived
+        self.hasCaffeine = hasCaffeine
+        self.hasLactate = hasLactate
+    }
+
+    /// Sicherungen und Verlauf aus der Zeit vor den Zusätzen haben die Felder nicht: dann „nein“.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        brand = try c.decodeIfPresent(String.self, forKey: .brand)
+        flavor = try c.decodeIfPresent(String.self, forKey: .flavor)
+        category = try c.decode(ProductCategory.self, forKey: .category)
+        baseUnit = try c.decode(BaseUnit.self, forKey: .baseUnit)
+        portionAmount = try c.decode(Double.self, forKey: .portionAmount)
+        carbsPerPortionG = try c.decode(Double.self, forKey: .carbsPerPortionG)
+        glucoseFructoseRatio = try c.decodeIfPresent(Double.self, forKey: .glucoseFructoseRatio)
+        isArchived = try c.decode(Bool.self, forKey: .isArchived)
+        hasCaffeine = try c.decodeIfPresent(Bool.self, forKey: .hasCaffeine) ?? false
+        hasLactate = try c.decodeIfPresent(Bool.self, forKey: .hasLactate) ?? false
+    }
+
+    /// Name für Listen und Auswahl: mit Geschmack und Zusätzen, soweit gesetzt.
+    public var displayName: String {
+        var parts = [name]
+        if let f = flavor?.trimmingCharacters(in: .whitespacesAndNewlines), !f.isEmpty { parts.append(f) }
+        if hasCaffeine { parts.append("mit Koffein") }
+        if hasLactate { parts.append("mit Laktat") }
+        return parts.joined(separator: " · ")
     }
 
     /// Derived, never stored (5.2).

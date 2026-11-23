@@ -9,6 +9,9 @@ struct ProductFormView: View {
 
     @State private var name = ""
     @State private var brand = ""
+    @State private var flavor = ""
+    @State private var hasCaffeine = false
+    @State private var hasLactate = false
     @State private var category: ProductCategory = .gel
     @State private var baseUnit: BaseUnit = .piece
     @State private var portion: Double?
@@ -19,7 +22,7 @@ struct ProductFormView: View {
 
     private var draft: ProductDraft {
         var d = ProductDraft()
-        d.name = name; d.brand = brand; d.category = category; d.baseUnit = baseUnit
+        d.name = name; d.brand = brand; d.flavor = flavor; d.hasCaffeine = hasCaffeine; d.hasLactate = hasLactate; d.category = category; d.baseUnit = baseUnit
         d.portionAmount = portion ?? 0
         d.carbsPerPortionG = carbs ?? 0
         d.glucoseFructoseRatio = ratio
@@ -37,8 +40,13 @@ struct ProductFormView: View {
                 Section("Produkt") {
                     TextField("Name (Pflicht)", text: $name)
                     TextField("Marke (optional)", text: $brand)
+                    TextField("Geschmack (optional)", text: $flavor)
                     Picker("Kategorie", selection: $category) {
                         ForEach(ProductCategory.allCases, id: \.self) { Label($0.title, systemImage: $0.symbol).tag($0) }
+                    }
+                    if category == .gel {
+                        Toggle("Mit Koffein", isOn: $hasCaffeine)
+                        Toggle("Mit Laktat", isOn: $hasLactate)
                     }
                     Picker("Basiseinheit", selection: $baseUnit) {
                         ForEach(BaseUnit.allCases, id: \.self) { Text($0.title).tag($0) }

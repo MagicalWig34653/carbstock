@@ -32,8 +32,13 @@ struct NewProductFields: View {
     var body: some View {
         TextField("Name (Pflicht)", text: $draft.name)
         TextField("Marke (optional)", text: $draft.brand)
+        TextField("Geschmack (optional)", text: $draft.flavor)
         Picker("Kategorie", selection: $draft.category) {
             ForEach(ProductCategory.allCases, id: \.self) { Label($0.title, systemImage: $0.symbol).tag($0) }
+        }
+        if draft.category == .gel {
+            Toggle("Mit Koffein", isOn: $draft.hasCaffeine)
+            Toggle("Mit Laktat", isOn: $draft.hasLactate)
         }
         Picker("Basiseinheit", selection: $draft.baseUnit) {
             ForEach(BaseUnit.allCases, id: \.self) { Text($0.title).tag($0) }

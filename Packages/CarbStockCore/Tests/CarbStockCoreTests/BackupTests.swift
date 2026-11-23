@@ -80,4 +80,78 @@ import Testing
         #expect(!DuplicateProducts.canMerge(a, into: otherUnit))
         #expect(!DuplicateProducts.canMerge(a, into: a))
     }
+
+    // MARK: Geschmacksrichtungen
+
+    @Test func displayNameShowsFlavorOnlyWhenSet() {
+        func p(_ f: String?) -> ProductInfo { ProductInfo(name: "Gel", flavor: f, category: .gel, baseUnit: .piece, carbsPerPortionG: 25) }
+        #expect(p("Zitrone").displayName == "Gel · Zitrone")
+        #expect(p(nil).displayName == "Gel")
+        #expect(p("  ").displayName == "Gel")
+    }
+
+    @Test func flavorSurvivesBackupRoundTrip() throws {
+        var doc = sample()
+        doc.products[0].flavor = "Cola"
+        let back = try BackupDocument.decode(try doc.encoded())
+        #expect(back.products[0].flavor == "Cola" && back == doc)
+    }
+
+    /// Sicherung aus der Version ohne Geschmack (Feld fehlt im JSON) bleibt lesbar.
+    @Test func backupWithoutFlavorFieldStillDecodes() throws {
+        let doc = sample()
+        let json = String(decoding: try doc.encoded(), as: UTF8.self)
+        #expect(!json.contains("\"flavor\"")) // nil wird nicht geschrieben: alte und neue Dateien ohne Geschmack sind gleich
+        let back = try BackupDocument.decode(Data(json.utf8))
+        #expect(back.products[0].flavor == nil)
+    }
+
+    @Test func differentFlavorsAreNotDuplicates() {
+        func p(_ flavor: String?, archived: Bool = false) -> ProductInfo {
+            ProductInfo(name: "Gel", brand: "Maurten", flavor: flavor, category: .gel, baseUnit: .piece, carbsPerPortionG: 25, isArchived: archived)
+        }
+        let lemon = p("Zitrone"), lemon2 = p("  zitrone "), cola = p("Cola"), plain = p(nil), plain2 = p("")
+        let groups = DuplicateProducts.groups(in: [lemon, lemon2, cola, plain, plain2])
+        #expect(Set(groups.map { Set($0.map(\.id)) }) == [[lemon.id, lemon2.id], [plain.id, plain2.id]])
+    }
+
+    // MARK: Koffein- und Laktatzusatz (Geloption)
+
+    @Test func displayNameShowsCaffeineAndLactateOnlyWhenSet() {
+        func p(_ f: String?, _ c: Bool, _ l: Bool) -> ProductInfo {
+            ProductInfo(name: "Gel", flavor: f, category: .gel, baseUnit: .piece, carbsPerPortionG: 25, hasCaffeine: c, hasLactate: l)
+        }
+        #expect(p(nil, false, false).displayName == "Gel")
+        #expect(p(nil, true, false).displayName == "Gel · mit Koffein")
+        #expect(p(nil, false, true).displayName == "Gel · mit Laktat")
+        #expect(p("Zitrone", true, true).displayName == "Gel · Zitrone · mit Koffein · mit Laktat")
+    }
+
+    @Test func additivesSurviveBackupRoundTrip() throws {
+        var doc = sample()
+        doc.products[0].hasCaffeine = true
+        doc.products[0].hasLactate = true
+        let back = try BackupDocument.decode(try doc.encoded())
+        #expect(back.products[0].hasCaffeine && back.products[0].hasLactate && back == doc)
+    }
+
+    /// Sicherung aus der Version ohne Zusätze (Felder fehlen im JSON) bleibt lesbar, beide Zusätze gelten dann als „nein“.
+    @Test func backupWithoutAdditiveFieldsStillDecodes() throws {
+        var doc = sample()
+        doc.products[0].hasCaffeine = true
+        let json = String(decoding: try doc.encoded(), as: UTF8.self)
+        let stripped = json.replacingOccurrences(of: "\"hasCaffeine\"", with: "\"unbekannt\"")
+            .replacingOccurrences(of: "\"hasLactate\"", with: "\"unbekannt2\"")
+        let back = try BackupDocument.decode(Data(stripped.utf8))
+        #expect(!back.products[0].hasCaffeine && !back.products[0].hasLactate)
+    }
+
+    @Test func differentAdditivesAreNotDuplicates() {
+        func p(_ c: Bool, _ l: Bool) -> ProductInfo {
+            ProductInfo(name: "Gel", brand: "Maurten", category: .gel, baseUnit: .piece, carbsPerPortionG: 25, hasCaffeine: c, hasLactate: l)
+        }
+        let plain = p(false, false), plain2 = p(false, false), caf = p(true, false), both = p(true, true), both2 = p(true, true)
+        let groups = DuplicateProducts.groups(in: [plain, plain2, caf, both, both2])
+        #expect(Set(groups.map { Set($0.map(\.id)) }) == [[plain.id, plain2.id], [both.id, both2.id]])
+    }
 }

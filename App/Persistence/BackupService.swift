@@ -61,9 +61,10 @@ final class BackupService {
 
         var products = Dictionary(uniqueKeysWithValues: ((try? context.fetch(FetchDescriptor<Product>())) ?? []).map { ($0.id, $0) })
         for p in doc.products where products[p.id] == nil {
-            let model = Product(id: p.id, name: p.name, brand: p.brand, category: p.category, baseUnit: p.baseUnit,
+            let model = Product(id: p.id, name: p.name, brand: p.brand, flavor: p.flavor, category: p.category, baseUnit: p.baseUnit,
                                 portionAmount: p.portionAmount, carbsPerPortionG: p.carbsPerPortionG,
-                                glucoseFructoseRatio: p.glucoseFructoseRatio)
+                                glucoseFructoseRatio: p.glucoseFructoseRatio,
+                                hasCaffeine: p.hasCaffeine, hasLactate: p.hasLactate)
             model.isArchived = p.isArchived
             context.insert(model)
             products[p.id] = model

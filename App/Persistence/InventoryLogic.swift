@@ -41,6 +41,9 @@ struct ProductSummary: Identifiable, Hashable, Sendable {
     var id: UUID
     var name: String
     var brand: String?
+    var flavor: String?
+    var hasCaffeine = false
+    var hasLactate = false
     var category: ProductCategory
     var baseUnit: BaseUnit
     var isArchived: Bool
@@ -48,6 +51,15 @@ struct ProductSummary: Identifiable, Hashable, Sendable {
     var carbsTotalG: Double
     /// Earliest best-before among batches with stock > 0; nil if none has one.
     var earliestExpiry: CalendarDay?
+    var displayName: String { ProductInfo(id: id, name: name, flavor: flavor, category: category, baseUnit: baseUnit, carbsPerPortionG: 1,
+                                         hasCaffeine: hasCaffeine, hasLactate: hasLactate).displayName }
+    /// Zweite Zeile der Liste: Marke, Geschmack, Zusätze (nil, wenn nichts davon gesetzt ist).
+    var detailLine: String? {
+        var parts = [brand, flavor].compactMap { Flavor.normalised($0) }
+        if hasCaffeine { parts.append("mit Koffein") }
+        if hasLactate { parts.append("mit Laktat") }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
     var hasStock: Bool { stock > 0 }
     var isConflict: Bool { stock < 0 }
     var batchesWithStock: [CalendarDay?] = []
@@ -75,7 +87,7 @@ struct InventoryFilter: Equatable, Sendable {
 }
 
 enum InventoryList {
-    /// Case- and diacritic-insensitive search over name and brand (AC-B5), then filters, sorted by name.
+    /// Case- and diacritic-insensitive search over name, brand and flavor (AC-B5), then filters, sorted by name.
     static func apply(_ filter: InventoryFilter, to products: [ProductSummary], today: CalendarDay) -> [ProductSummary] {
         let query = filter.search.trimmingCharacters(in: .whitespaces)
         func matches(_ text: String?) -> Bool {
@@ -83,7 +95,7 @@ enum InventoryList {
         }
         return products.filter { p in
             if filter.mode == .archive { if !p.isArchived { return false } } else if p.isArchived { return false }
-            if !query.isEmpty, !(matches(p.name) || matches(p.brand)) { return false }
+            if !query.isEmpty, !(matches(p.name) || matches(p.brand) || matches(p.flavor)) { return false }
             if let c = filter.category, p.category != c { return false }
             let dated = p.batchesWithStock
             switch filter.mode {
@@ -94,7 +106,7 @@ enum InventoryList {
             case .noExpiry: return dated.contains { $0 == nil }
             }
         }
-        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
 }
 
@@ -115,6 +127,9 @@ struct ProductDraft: Equatable, Sendable {
 
     var name = ""
     var brand = ""
+    var flavor = ""
+    var hasCaffeine = false
+    var hasLactate = false
     var category: ProductCategory = .gel
     var baseUnit: BaseUnit = .piece
     var portionAmount: Double = 1

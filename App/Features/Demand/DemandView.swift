@@ -172,7 +172,7 @@ struct DemandView: View {
 
     private func batchNames() -> [UUID: String] {
         var out: [UUID: String] = [:]
-        for p in products { for b in p.batches ?? [] { out[b.id] = p.name } }
+        for p in products { for b in p.batches ?? [] { out[b.id] = p.displayName } }
         return out
     }
 }

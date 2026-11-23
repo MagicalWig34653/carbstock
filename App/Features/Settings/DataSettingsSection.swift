@@ -115,7 +115,7 @@ struct DuplicateProductsView: View {
                         Button {
                             do { try service.merge(source, into: target) } catch { errorText = (error as? BackupService.Failure)?.message ?? "Das hat nicht geklappt." }
                         } label: {
-                            Label("In „\(target.name)“ (\(Self.detail(target))) zusammenführen", systemImage: "arrow.triangle.merge")
+                            Label("In „\(target.displayName)“ (\(Self.detail(target))) zusammenführen", systemImage: "arrow.triangle.merge")
                         }
                     }
                 }
@@ -127,5 +127,8 @@ struct DuplicateProductsView: View {
         } message: { Text(errorText ?? "") }
     }
 
-    private static func detail(_ p: Product) -> String { [p.brand, p.category.title].compactMap { $0 }.joined(separator: ", ") }
+    private static func detail(_ p: Product) -> String {
+        let parts: [String?] = [p.brand, p.flavor, p.hasCaffeine ? "mit Koffein" : nil, p.hasLactate ? "mit Laktat" : nil, p.category.title]
+        return parts.compactMap { $0 }.joined(separator: ", ")
+    }
 }

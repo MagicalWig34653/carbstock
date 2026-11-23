@@ -13,7 +13,7 @@ struct ShoppingListView: View {
     @State private var errorText: String?
 
     private var service: PurchaseService { PurchaseService(context: context) }
-    private var selectable: [Product] { products.filter { !$0.isArchived }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending } }
+    private var selectable: [Product] { products.filter { !$0.isArchived }.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending } }
 
     var body: some View {
         let open = items.filter { $0.state == .open }
@@ -48,7 +48,7 @@ struct ShoppingListView: View {
     }
 
     private func name(_ item: ShoppingListItem) -> String {
-        if let id = item.productID, let p = products.first(where: { $0.id == id }) { return p.name }
+        if let id = item.productID, let p = products.first(where: { $0.id == id }) { return p.displayName }
         return item.freeText ?? "Eintrag"
     }
 
@@ -112,7 +112,7 @@ struct ShoppingEntryFormView: View {
     @State private var draft = ShoppingEntryDraft()
     @State private var errorText: String?
 
-    private var selectable: [Product] { products.filter { !$0.isArchived }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending } }
+    private var selectable: [Product] { products.filter { !$0.isArchived }.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending } }
     private var unit: BaseUnit { draft.productID.flatMap { id in products.first { $0.id == id }?.baseUnit } ?? .piece }
 
     var body: some View {
@@ -121,7 +121,7 @@ struct ShoppingEntryFormView: View {
                 Section("Was?") {
                     Picker("Produkt", selection: $draft.productID) {
                         Text("Freitext").tag(UUID?.none)
-                        ForEach(selectable) { Text($0.name).tag(UUID?.some($0.id)) }
+                        ForEach(selectable) { Text($0.displayName).tag(UUID?.some($0.id)) }
                     }
                     if draft.productID == nil { TextField("Text (z. B. Gel Sorte X)", text: $draft.freeText) }
                     LabeledContent(unit == .gram ? "Menge (g)" : "Menge (Stück)") {

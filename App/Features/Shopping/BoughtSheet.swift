@@ -37,7 +37,7 @@ struct BoughtSheet: View {
                 Section("Produkt") {
                     Picker("Produkt", selection: $draft.productID) {
                         Text("Neues Produkt").tag(UUID?.none)
-                        ForEach(products) { Text($0.name).tag(UUID?.some($0.id)) }
+                        ForEach(products) { Text($0.displayName).tag(UUID?.some($0.id)) }
                     }
                     if draft.productID == nil { NewProductFields(draft: $draft.newProduct) }
                 }

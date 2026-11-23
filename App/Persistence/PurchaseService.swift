@@ -73,7 +73,7 @@ final class PurchaseService {
 
     func products() -> [Product] {
         let all = (try? context.fetch(FetchDescriptor<Product>())) ?? []
-        return all.filter { !$0.isArchived }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        return all.filter { !$0.isArchived }.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
 
     func product(id: UUID) -> Product? {
@@ -106,7 +106,8 @@ final class PurchaseService {
             context: PurchaseContext(today: today(), lots: lots, series: series, history: history),
             parameters: draft.parameters)
         let snapshot = OfferSnapshot(
-            productID: info.id, isNewProduct: existing == nil, productName: info.name, brand: info.brand,
+            productID: info.id, isNewProduct: existing == nil, productName: info.name, brand: info.brand, flavor: info.flavor,
+            hasCaffeine: info.hasCaffeine, hasLactate: info.hasLactate,
             categoryRaw: info.category.rawValue, baseUnitRaw: info.baseUnit.rawValue,
             portionAmount: info.portionAmount, carbsPerPortionG: info.carbsPerPortionG,
             glucoseFructoseRatio: info.glucoseFructoseRatio, quantity: quantity,

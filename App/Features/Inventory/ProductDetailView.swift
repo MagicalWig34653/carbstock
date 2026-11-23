@@ -11,6 +11,8 @@ struct ProductDetailView: View {
     @State private var bookingBatch: Batch?
     @State private var confirmArchive = false
     @State private var errorText: String?
+    @State private var editingFlavor = false
+    @State private var flavorText = ""
 
     private var service: InventoryService { InventoryService(context: context) }
     private var today: CalendarDay { Fmt.today() }
@@ -33,6 +35,23 @@ struct ProductDetailView: View {
                 }
                 LabeledContent(product.baseUnit == .gram ? "Carbs je Portion (\(Fmt.grams(product.portionAmount)))" : "Carbs je Stück",
                                value: Fmt.grams(product.carbsPerPortionG))
+                Button {
+                    flavorText = product.flavor ?? ""
+                    editingFlavor = true
+                } label: {
+                    LabeledContent("Geschmack") {
+                        Text(product.flavor ?? "Keiner").foregroundStyle(product.flavor == nil ? .secondary : .primary)
+                    }
+                    .contentShape(Rectangle()) // ganze Zeile tippbar, nicht nur der Text
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Geschmack ändern")
+                if product.category == .gel {
+                    Toggle("Mit Koffein", isOn: Binding(get: { product.hasCaffeine },
+                        set: { v in run { try service.setAdditives(caffeine: v, lactate: product.hasLactate, on: product) } }))
+                    Toggle("Mit Laktat", isOn: Binding(get: { product.hasLactate },
+                        set: { v in run { try service.setAdditives(caffeine: product.hasCaffeine, lactate: v, on: product) } }))
+                }
                 if let r = product.glucoseFructoseRatio {
                     LabeledContent("Glukose : Fruktose", value: "1 : \(r.formatted())")
                 }
@@ -64,8 +83,13 @@ struct ProductDetailView: View {
                 }
             }
         }
-        .navigationTitle(product.name)
+        .navigationTitle(product.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Geschmack", isPresented: $editingFlavor) {
+            TextField("z. B. Zitrone", text: $flavorText)
+            Button("Sichern") { run { try service.setFlavor(flavorText, on: product) } }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { Text("Leer lassen, wenn das Produkt keinen Geschmack hat.") }
         .sheet(isPresented: $addingBatch) { AddBatchView(product: product) }
         .sheet(item: $bookingBatch) { BookingSheet(batch: $0, product: product) }
         .confirmationDialog("Produkt archivieren?", isPresented: $confirmArchive, titleVisibility: .visible) {

@@ -76,6 +76,26 @@ import Testing
         #expect(Set(activity.attributes.map(\.name)) == allowed)
     }
 
+    /// Geschmack: ein neues optionales Feld am Produkt, alle bisherigen Felder bleiben.
+    @Test func flavorFieldIsAdditiveAndOptional() throws {
+        let entity = try #require(Self.inventory.entities.first { $0.name == "Product" })
+        let attributes = Dictionary(uniqueKeysWithValues: entity.attributes.map { ($0.name, $0) })
+        #expect(attributes["flavor"]?.isOptional == true)
+        for name in ["id", "name", "brand", "categoryRaw", "baseUnitRaw", "portionAmount", "carbsPerPortionG", "glucoseFructoseRatio",
+                     "isArchived", "createdAt", "updatedAt", "schemaVersion"] {
+            #expect(attributes[name] != nil, "Product.\(name) fehlt")
+        }
+    }
+
+    /// Koffein-/Laktatzusatz: zwei neue Felder am Produkt, nichts umbenannt; ein neues Produkt startet mit „nein“.
+    @Test func additiveFieldsExistAndDefaultToNo() throws {
+        let entity = try #require(Self.inventory.entities.first { $0.name == "Product" })
+        let names = Set(entity.attributes.map(\.name))
+        #expect(names.contains("hasCaffeine") && names.contains("hasLactate") && names.contains("flavor"))
+        let p = Product(name: "Gel", category: .gel, baseUnit: .piece, carbsPerPortionG: 25)
+        #expect(!p.hasCaffeine && !p.hasLactate)
+    }
+
     /// M5 added fields to two existing records: additive means optional (or defaulted), nothing renamed or removed.
     @Test func m5FieldsAreAdditiveAndOptional() throws {
         func attributes(_ name: String) throws -> [String: Schema.Attribute] {

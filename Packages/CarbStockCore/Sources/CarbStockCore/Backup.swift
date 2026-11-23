@@ -119,12 +119,12 @@ public enum DuplicateProducts {
             .split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
     }
 
-    /// Groups of at least two non-archived products with the same name and brand (ignoring case, accents, spacing).
+    /// Groups of at least two non-archived products with the same name, brand, flavor and additives (ignoring case, accents, spacing).
     public static func groups(in products: [ProductInfo]) -> [[ProductInfo]] {
         var order: [String] = []
         var byKey: [String: [ProductInfo]] = [:]
         for p in products where !p.isArchived {
-            let key = normalised(p.name) + "|" + normalised(p.brand)
+            let key = normalised(p.name) + "|" + normalised(p.brand) + "|" + normalised(p.flavor) + "|\(p.hasCaffeine)|\(p.hasLactate)"
             if byKey[key] == nil { order.append(key) }
             byKey[key, default: []].append(p)
         }

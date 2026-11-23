@@ -84,7 +84,7 @@ struct UseFirstView: View {
         let badge = ExpiryBadge(status: e.status, days: e.remainingDays)
         let batch = products.lazy.flatMap { $0.batches ?? [] }.first { $0.id == e.batch.id }
         return VStack(alignment: .leading, spacing: 4) {
-            Text(e.product.name).font(.headline)
+            Text(e.product.displayName).font(.headline)
             Text("\(Fmt.quantity(e.remainingQuantity, unit: e.product.baseUnit)) · \(Fmt.grams(e.carbsG)) Carbs")
                 .font(.subheadline)
             StatusLabel(status: badge).fontWeight(e.status == .expired ? .bold : .regular)

@@ -23,7 +23,7 @@ struct OfferDeciderView: View {
 
     private var service: PurchaseService { PurchaseService(context: context) }
     private var selectable: [Product] {
-        products.filter { !$0.isArchived }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        products.filter { !$0.isArchived }.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
     private var selected: Product? { draft.existingProductID.flatMap { id in products.first { $0.id == id } } }
     private var unit: BaseUnit { selected?.baseUnit ?? draft.newProduct.baseUnit }
@@ -78,7 +78,7 @@ struct OfferDeciderView: View {
         Section {
             Picker("Produkt", selection: $draft.existingProductID) {
                 Text("Neues Produkt").tag(UUID?.none)
-                ForEach(selectable) { Text($0.name).tag(UUID?.some($0.id)) }
+                ForEach(selectable) { Text($0.displayName).tag(UUID?.some($0.id)) }
             }
             if let selected {
                 LabeledContent("Carbs", value: "\(selected.carbsPerPortionG.formatted()) g je \(selected.baseUnit == .gram ? "Portion" : "Stück")")

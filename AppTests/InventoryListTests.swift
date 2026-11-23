@@ -6,9 +6,9 @@ import Testing
 @Suite struct InventoryListTests {
     let today = CalendarDay(year: 2026, month: 11, day: 21)
 
-    func row(_ name: String, brand: String? = nil, _ cat: ProductCategory = .gel,
+    func row(_ name: String, brand: String? = nil, flavor: String? = nil, _ cat: ProductCategory = .gel,
              expiries: [CalendarDay?] = [], archived: Bool = false) -> ProductSummary {
-        ProductSummary(id: UUID(), name: name, brand: brand, category: cat, baseUnit: .piece, isArchived: archived,
+        ProductSummary(id: UUID(), name: name, brand: brand, flavor: flavor, category: cat, baseUnit: .piece, isArchived: archived,
                        stock: expiries.count, carbsTotalG: 0, earliestExpiry: expiries.compactMap { $0 }.min(),
                        batchesWithStock: expiries)
     }
@@ -33,5 +33,23 @@ import Testing
         #expect(names(InventoryFilter(mode: .noExpiry)) == ["Alt", "Ohne"])
         #expect(names(InventoryFilter(category: .drink)) == ["Ohne"])
         #expect(names(InventoryFilter()) == ["Alt", "Bald", "Ohne", "Spät"])
+    }
+
+    @Test func searchFindsFlavor() {
+        let rows = [row("Gel", flavor: "Zitrone"), row("Gel", flavor: "Cola"), row("Riegel")]
+        #expect(InventoryList.apply(InventoryFilter(search: "zitr"), to: rows, today: today).map(\.flavor) == ["Zitrone"])
+        #expect(InventoryList.apply(InventoryFilter(search: "COLA"), to: rows, today: today).count == 1)
+    }
+
+    @Test func sameNameSortsByFlavorAndDisplayNameShowsIt() {
+        let rows = [row("Gel", flavor: "Zitrone"), row("Gel", flavor: "Cola"), row("Gel")]
+        let sorted = InventoryList.apply(InventoryFilter(), to: rows, today: today)
+        #expect(sorted.map(\.displayName) == ["Gel", "Gel · Cola", "Gel · Zitrone"])
+    }
+
+    @Test func rowNameShowsAdditives() {
+        var r = row("Gel", flavor: "Zitrone")
+        r.hasCaffeine = true
+        #expect(r.displayName == "Gel · Zitrone · mit Koffein")
     }
 }

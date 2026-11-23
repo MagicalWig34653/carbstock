@@ -19,6 +19,11 @@ final class Product {
     var id: UUID = UUID()
     var name: String = ""
     var brand: String?
+    /// Geschmacksrichtung. Additiv ergänzt (optional): bestehende Datensätze bleiben gültig.
+    var flavor: String?
+    /// Geloption Koffein- bzw. Laktatzusatz (Ja/Nein). Additiv mit Vorgabewert: bestehende Datensätze bleiben gültig.
+    var hasCaffeine: Bool = false
+    var hasLactate: Bool = false
     var categoryRaw: String = ProductCategory.gel.rawValue
     var baseUnitRaw: String = BaseUnit.piece.rawValue
     var portionAmount: Double = 1
@@ -32,11 +37,15 @@ final class Product {
     @Relationship(deleteRule: .cascade, inverse: \Batch.product)
     var batches: [Batch]? = []
 
-    init(id: UUID = UUID(), name: String, brand: String? = nil, category: ProductCategory, baseUnit: BaseUnit,
-         portionAmount: Double = 1, carbsPerPortionG: Double, glucoseFructoseRatio: Double? = nil) {
+    init(id: UUID = UUID(), name: String, brand: String? = nil, flavor: String? = nil, category: ProductCategory, baseUnit: BaseUnit,
+         portionAmount: Double = 1, carbsPerPortionG: Double, glucoseFructoseRatio: Double? = nil,
+         hasCaffeine: Bool = false, hasLactate: Bool = false) {
         self.id = id
         self.name = name
         self.brand = brand
+        self.flavor = flavor
+        self.hasCaffeine = hasCaffeine
+        self.hasLactate = hasLactate
         self.categoryRaw = category.rawValue
         self.baseUnitRaw = baseUnit.rawValue
         self.portionAmount = portionAmount
@@ -46,11 +55,13 @@ final class Product {
 
     var category: ProductCategory { ProductCategory(rawValue: categoryRaw) ?? .gel }
     var baseUnit: BaseUnit { BaseUnit(rawValue: baseUnitRaw) ?? .piece }
+    var displayName: String { info.displayName }
 
     var info: ProductInfo {
-        ProductInfo(id: id, name: name, brand: brand, category: category, baseUnit: baseUnit,
+        ProductInfo(id: id, name: name, brand: brand, flavor: flavor, category: category, baseUnit: baseUnit,
                     portionAmount: portionAmount, carbsPerPortionG: carbsPerPortionG,
-                    glucoseFructoseRatio: glucoseFructoseRatio, isArchived: isArchived)
+                    glucoseFructoseRatio: glucoseFructoseRatio, isArchived: isArchived,
+                    hasCaffeine: hasCaffeine, hasLactate: hasLactate)
     }
 }
 

@@ -249,4 +249,33 @@ import Testing
         #expect(s.expired.count == 1 && s.soon.count == 1 && s.rest.count == 2)
         #expect(s.attentionCount == 2)
     }
+
+    @Test func setFlavorTrimsClearsAndKeepsStock() throws {
+        let p = try gel()
+        let before = service.stock(of: p)
+        try service.setFlavor("  Zitrone ", on: p)
+        #expect(p.flavor == "Zitrone" && p.displayName.hasSuffix(" · Zitrone") && service.stock(of: p) == before)
+        try service.setFlavor("   ", on: p)
+        #expect(p.flavor == nil && p.displayName == p.name)
+    }
+
+    // Koffein- und Laktatzusatz (Geloption)
+    @Test func setAdditivesKeepsStockAndShowsInName() throws {
+        let p = try gel()
+        let before = service.stock(of: p)
+        #expect(!p.hasCaffeine && !p.hasLactate)
+        try service.setAdditives(caffeine: true, lactate: false, on: p)
+        #expect(p.hasCaffeine && !p.hasLactate && p.displayName.hasSuffix(" · mit Koffein") && service.stock(of: p) == before)
+        try service.setAdditives(caffeine: true, lactate: true, on: p)
+        #expect(p.displayName.hasSuffix(" · mit Koffein · mit Laktat"))
+        try service.setAdditives(caffeine: false, lactate: false, on: p)
+        #expect(p.displayName == p.name)
+    }
+
+    @Test func createProductTakesAdditivesFromDraft() throws {
+        var d = ProductDraft()
+        d.name = "Gel"; d.carbsPerPortionG = 25; d.quantity = 2; d.hasCaffeine = true; d.hasLactate = true
+        let p = try service.createProduct(d)
+        #expect(p.hasCaffeine && p.hasLactate)
+    }
 }

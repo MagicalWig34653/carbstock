@@ -123,6 +123,66 @@ import Testing
         #expect(training.sessions().isEmpty && training.userRates().isEmpty)
         #expect(backup.document().products.isEmpty)
     }
+
+    // Geschmacksrichtungen: Export, Import, Doppelerkennung
+    @Test func flavorSurvivesExportImportAndOldBackupsStillImport() throws {
+        let (_, inv, _, backup) = make()
+        var d = ProductDraft()
+        d.name = "Gel"; d.brand = "Maurten"; d.flavor = "  Zitrone "; d.carbsPerPortionG = 25; d.quantity = 4
+        let p = try inv.createProduct(d)
+        #expect(p.flavor == "Zitrone")
+        let data = try backup.exportData()
+        #expect(String(decoding: data, as: UTF8.self).contains("Zitrone"))
+
+        let (ctx2, _, _, backup2) = make()
+        try backup2.importBackup(data)
+        #expect(try ctx2.fetch(FetchDescriptor<Product>()).first?.flavor == "Zitrone")
+
+        // Alte Sicherung: ohne Geschmack, Produkt wird ohne Geschmack angelegt
+        let (_, inv3, _, backup3) = make()
+        var plain = ProductDraft(); plain.name = "Riegel"; plain.carbsPerPortionG = 30; plain.quantity = 1
+        try inv3.createProduct(plain)
+        let old = try backup3.exportData()
+        #expect(!String(decoding: old, as: UTF8.self).contains("flavor"))
+        let (ctx4, _, _, backup4) = make()
+        try backup4.importBackup(old)
+        #expect(try ctx4.fetch(FetchDescriptor<Product>()).first?.flavor == nil)
+    }
+
+    @Test func additivesSurviveExportImportAndOldBackupsStillImport() throws {
+        let (_, inv, _, backup) = make()
+        var d = ProductDraft()
+        d.name = "Gel"; d.carbsPerPortionG = 25; d.quantity = 4; d.hasCaffeine = true; d.hasLactate = true
+        try inv.createProduct(d)
+        var plain = ProductDraft(); plain.name = "Riegel"; plain.carbsPerPortionG = 30; plain.quantity = 1
+        try inv.createProduct(plain)
+        let data = try backup.exportData()
+        let (ctx2, _, _, backup2) = make()
+        try backup2.importBackup(data)
+        let products = try ctx2.fetch(FetchDescriptor<Product>())
+        #expect(products.first { $0.name == "Gel" }.map { $0.hasCaffeine && $0.hasLactate } == true)
+        #expect(products.first { $0.name == "Riegel" }.map { !$0.hasCaffeine && !$0.hasLactate } == true)
+
+        // Sicherung aus der Version ohne Zusätze: Felder fehlen, beide gelten als „nein“
+        let text = String(decoding: data, as: UTF8.self)
+            .replacingOccurrences(of: "\"hasCaffeine\"", with: "\"x1\"")
+            .replacingOccurrences(of: "\"hasLactate\"", with: "\"x2\"")
+        let (ctx3, _, _, backup3) = make()
+        try backup3.importBackup(Data(text.utf8))
+        #expect(try ctx3.fetch(FetchDescriptor<Product>()).allSatisfy { !$0.hasCaffeine && !$0.hasLactate })
+    }
+
+    @Test func twoFlavorsOfOneProductAreNoDuplicates() throws {
+        let (_, inv, _, backup) = make()
+        for f in ["Zitrone", "Cola"] {
+            var d = ProductDraft(); d.name = "Gel"; d.brand = "Maurten"; d.flavor = f; d.carbsPerPortionG = 25; d.quantity = 2
+            try inv.createProduct(d)
+        }
+        #expect(backup.duplicateGroups().isEmpty)
+        var third = ProductDraft(); third.name = "Gel"; third.brand = "Maurten"; third.flavor = "zitrone"; third.carbsPerPortionG = 25; third.quantity = 1
+        try inv.createProduct(third)
+        #expect(backup.duplicateGroups().count == 1)
+    }
 }
 
 @Suite struct SyncPresentationTests {
