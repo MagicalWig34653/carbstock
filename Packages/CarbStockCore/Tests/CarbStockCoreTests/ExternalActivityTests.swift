@@ -261,4 +261,37 @@ import Testing
                                                 handledActivityIDs: [ride.id])
         #expect(s.isEmpty)
     }
+
+    @Test func summerTimeSwitchAndMidnightDecideTheLocalDay() {
+        // Berlin: Sommerzeit beginnt am 28.3.2027 um 2:00 (UTC+1 → UTC+2).
+        func ride(_ iso: String, minutes: Double = 60) -> ExternalActivity {
+            let start = ISO8601DateFormatter().date(from: iso)!
+            return ExternalActivity(source: .health, externalID: iso, start: start, movingSeconds: minutes * 60,
+                                    elapsedSeconds: minutes * 60, sport: .cycling)
+        }
+        func day(_ a: ExternalActivity) -> CalendarDay {
+            let session = PlannedSession(day: CalendarDay(a.start, in: berlin), type: .z2, durationMinutes: 60)
+            let wrong = PlannedSession(day: CalendarDay(a.start, in: berlin).adding(days: -1), type: .z2, durationMinutes: 60)
+            let s = CompletionSuggester.suggestions(groups: ActivityGrouper.group([a]).groups, sessions: [wrong, session], timeZone: berlin)
+            #expect(s.count == 1 && s[0].sessionID == session.id)
+            return session.day
+        }
+        // 23:30 UTC am 27.3. = 0:30 Winterzeit am 28.3.; 22:30 UTC am 28.3. = 0:30 Sommerzeit am 29.3.
+        #expect(day(ride("2027-03-27T23:30:00Z")) == CalendarDay(year: 2027, month: 3, day: 28))
+        #expect(day(ride("2027-03-28T22:30:00Z")) == CalendarDay(year: 2027, month: 3, day: 29))
+        // Fahrt über Mitternacht (23:30 → 0:30 Ortszeit) gehört zum Starttag.
+        #expect(day(ride("2027-03-27T22:30:00Z", minutes: 120)) == CalendarDay(year: 2027, month: 3, day: 27))
+    }
+
+    @Test func duplicateRuleIgnoresTimeZonesAndSummerTime() {
+        // Dieselbe Fahrt über die Zeitumstellung: Absolutzeit zählt, nicht die Ortszeit.
+        let f = ISO8601DateFormatter()
+        func ride(_ s: ActivitySource, _ iso: String) -> ExternalActivity {
+            ExternalActivity(source: s, externalID: iso, start: f.date(from: iso)!, movingSeconds: 3600, elapsedSeconds: 3600, sport: .cycling)
+        }
+        let a = ride(.health, "2027-03-28T00:30:00Z"), b = ride(.strava, "2027-03-28T00:33:00+00:00")
+        #expect(ActivityMatcher.compare(a, b) == .duplicate)
+        let c = ride(.strava, "2027-03-28T01:30:00+01:00") // gleicher Zeitpunkt wie 00:30Z
+        #expect(ActivityMatcher.compare(a, c) == .duplicate)
+    }
 }
