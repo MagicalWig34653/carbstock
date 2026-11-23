@@ -20,7 +20,7 @@ Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderu
 
 | M8 (Teil) Erster TestFlight-Build | App-Icon (Platzhalter, `scripts/make-icon.swift`), signiertes Release-Archiv, Upload **0.1.0 (1)** am 23.11. über Xcode, in App Store Connect verarbeitet (VALID, Verteilung „intern“). Distribution-Signierung geprüft: `aps-environment=production`, iCloud-Umgebung Production, `get-task-allow=false` | Archiv + IPA-Prüfung, Core 92 Tests, App-Tests grün |
 
-| M4b Allgemein nutzbar (Teil) | Ersteinrichtung der Carbs/h je Art beim ersten Start (Sheet, überspringbar, nur Abweichungen vom Vorschlag werden gespeichert, Gerät merkt „erledigt“). Keine festen persönlichen Werte. Nicht im Test-/Beispieldaten-Start | 4 App-Tests `RateSetupTests`; Sicht-Prüfung des Sheets steht aus |
+| M4b Allgemein nutzbar (Teil) | Ersteinrichtung der Carbs/h je Art beim ersten Start (Sheet, überspringbar, nur Abweichungen vom Vorschlag werden gespeichert, Gerät merkt „erledigt“). Keine festen persönlichen Werte. Nicht im Test-/Beispieldaten-Start | 4 App-Tests `RateSetupTests`; Sheet im Simulator gesehen (23.11.) |
 | M9a Externe Aktivitäten (Core) | `ExternalActivity`, idempotenter Import, Duplikatregel (≤ 5 min, ≥ 80 %, Sportart; „Vielleicht doppelt“), Nutzerentscheidungen, Zählung einmal, Vorschlag „erledigt“ | 26 Core-Tests (AC-X1…X5), Core gesamt 118 |
 | M9c Apple Health (Lesen) | Tab Training → „Fahrten aus Apple Health“: einlesen (nur Radfahrten, 90 Tage, Beginn und Dauer), Duplikate zusammengefasst, Vorschlag „Session als erledigt markieren“ (bucht nichts), Ausblenden, Löschen. Store „Imports“ lokal, vom Geräte-Backup ausgenommen, nicht im Export; „Alle Daten löschen“ räumt ihn. HealthKit-Entitlement + Nutzungstext gesetzt. Quelle hinter Protokoll (`WorkoutSource`), Tests mit Attrappe | 10 App-Tests `ActivityServiceTests`, Schema-Test Imports; App gesamt 117 grün |
 
@@ -37,10 +37,10 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 - **Capability HealthKit in der App-ID:** Xcode ergänzt sie beim nächsten signierten Archiv automatisch (Portal-Änderung durch Automatic Signing). Erst nach Linos Okay archivieren; der Build 0.1.0 (1) enthält noch kein HealthKit.
 - **Datenschutz-Etikett / Review-Text:** Health wird gelesen, nicht erhoben („Collect“ = Übertragung vom Gerät); Etikett und Datenschutzerklärung (M8b) bewertet Lino. Der Nutzungstext steht in `project.yml`.
 - **Spike S4 (zwei Geräte, echte Health-Daten):** ungeprüft. Die App nimmt nicht an, dass jede Fahrt auf jedem Gerät liegt; der Abgleich läuft zeitbasiert (AC-X3), nicht über die Health-UUID.
-- **Sicht-Prüfung der Oberfläche auf einem Gerät mit Health-Daten** steht aus (Simulator hat keine Fahrten; nur Attrappen-Tests).
+- **Sicht-Prüfung mit Health-Daten** steht aus: Leerzustand von „Fahrten“ im Simulator gesehen (23.11.), aber ohne Fahrten; Listen, Vorschläge und „Vielleicht doppelt“ nur durch Attrappen-Tests belegt.
 
 ## Nächste Schritte (Reihenfolge)
-1. **M7 Rest:** Einstellungen über iCloud-KVS (O-24); Prüfung am Gerät (Spike S1).
+1. **M7 Rest:** Einstellungen über iCloud-KVS (O-24) bewusst noch nicht gebaut: es gibt keine synchronisierte Einstellung (Farbschwellen, Horizont, Reserve haben keine Oberfläche; Carbs/h und Erinnerungen sind gerätelokal). Baut man den `SettingsStore` jetzt, hat er keinen Nutzer. Wird mit der ersten solchen Einstellung gebaut; Prüfung am Gerät (Spike S1) liegt bei Lino.
 2. **M4b Rest:** neutrale Leerzustände prüfen (Bedarf ohne Produkte), Englisch-Frage O-21 vor dem externen TestFlight.
 3. **M9 Trainingsquellen:** M9a (Core) und M9c (Health lesen) stehen; Strava (M9b) wartet auf Linos Wahl A/B/C und ist laut Lino nachrangig: `docs/TRAININGSQUELLEN.md`.
 4. **M8:** App-Icon, Barrierefreiheit, Datenschutzerklärung, TestFlight (auch extern) nach Freigabe des Maintainers.
