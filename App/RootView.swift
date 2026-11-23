@@ -10,6 +10,8 @@ struct RootView: View {
     @Query private var batches: [Batch]
     @Environment(\.scenePhase) private var scenePhase
     @State private var router = AppRouter.shared
+    /// Per device: the first-start setup of the carbs/h values (M4b) is shown once and can be skipped.
+    @AppStorage("rateSetupDone") private var rateSetupDone = false
     private let scheduler = ReminderScheduler()
 
     var body: some View {
@@ -22,12 +24,21 @@ struct RootView: View {
             Tab("Einkauf", systemImage: "cart", value: AppTab.shopping) { ShoppingView() }
             Tab("Training", systemImage: "bicycle", value: AppTab.training) { TrainingView() }
         }
+        .sheet(isPresented: Binding(get: { !rateSetupDone && !Self.suppressSetup }, set: { _ in })) {
+            RateSetupView { rateSetupDone = true }
+        }
         // Rebuild the reminders at launch, on return to the foreground and after booking/batch changes (8.3).
         .task { await scheduler.rebuild(context: context) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await scheduler.rebuild(context: context) } }
         }
         .onChange(of: changeToken) { _, _ in Task { await scheduler.rebuild(context: context) } }
+    }
+
+    /// Tests and sample-data runs start without the setup sheet.
+    private static var suppressSetup: Bool {
+        let args = ProcessInfo.processInfo.arguments
+        return args.contains("-CarbStockInMemory") || args.contains("-CarbStockSampleData")
     }
 
     /// Changes whenever a movement or a batch's expiry/archive state changes.

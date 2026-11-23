@@ -180,3 +180,43 @@ import Testing
         #expect(SessionType.allCases.allSatisfy { !$0.title.isEmpty })
     }
 }
+
+@MainActor
+@Suite struct RateSetupTests {
+    let container: ModelContainer
+    let context: ModelContext
+    let service: TrainingService
+
+    init() {
+        container = Stores.make(inMemory: true).container
+        context = container.mainContext
+        service = TrainingService(context: context)
+    }
+
+    @Test func startValuesAreTheSuggestionsThenUserValues() {
+        let start = RateSetup.initialValues(userRates: [:])
+        for t in SessionType.allCases { #expect(start[t] == CarbRate.builtIn(t).defaultPerHour) }
+        #expect(RateSetup.initialValues(userRates: [.z2: 45])[.z2] == 45)
+    }
+
+    @Test func acceptingTheSuggestionsStoresNothing() throws {
+        try RateSetup.apply(RateSetup.initialValues(userRates: [:]), using: service)
+        #expect(service.userRates().isEmpty)
+        #expect(try context.fetch(FetchDescriptor<CarbRateOverride>()).isEmpty)
+    }
+
+    @Test func onlyDeviationsAreStored() throws {
+        var v = RateSetup.initialValues(userRates: [:])
+        v[.z2] = CarbRate.builtIn(.z2).defaultPerHour + 10
+        try RateSetup.apply(v, using: service)
+        #expect(service.userRates() == [.z2: CarbRate.builtIn(.z2).defaultPerHour + 10])
+        // zurück auf den Vorschlag entfernt den Eintrag wieder
+        v[.z2] = CarbRate.builtIn(.z2).defaultPerHour
+        try RateSetup.apply(v, using: service)
+        #expect(service.userRates().isEmpty)
+    }
+
+    @Test func outOfRangeValueIsRejected() {
+        #expect(throws: TrainingService.Failure.rateOutOfRange) { try RateSetup.apply([.z2: 9999], using: service) }
+    }
+}

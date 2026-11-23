@@ -138,3 +138,20 @@ extension Fmt {
 
     static func weeks(_ w: Double) -> String { w.formatted(.number.precision(.fractionLength(1))) }
 }
+
+/// Ersteinrichtung der Carbs/h-Werte (M4b): die Voreinstellungen im Code sind nur Vorschläge, gespeichert wird
+/// nur, was der Nutzer davon abweichend wählt (Spec 5.5). Nichts ist auf eine Person zugeschnitten.
+enum RateSetup {
+    /// Startwerte der Einrichtung: bisherige eigene Werte, sonst der Vorschlag.
+    static func initialValues(userRates: [SessionType: Int]) -> [SessionType: Int] {
+        Dictionary(uniqueKeysWithValues: SessionType.allCases.map { ($0, userRates[$0] ?? CarbRate.builtIn($0).defaultPerHour) })
+    }
+
+    /// Übernimmt die gewählten Werte; Werte gleich dem Vorschlag legen keinen Eintrag an.
+    @MainActor
+    static func apply(_ values: [SessionType: Int], using service: TrainingService) throws {
+        for type in SessionType.allCases {
+            if let v = values[type] { try service.setRate(v, for: type) }
+        }
+    }
+}
