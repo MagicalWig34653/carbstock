@@ -91,38 +91,60 @@ struct ProductRowView: View {
     let summary: ProductSummary
     let today: CalendarDay
     let onStep: (Int) -> Void
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// Bei den Bedienungshilfen-Stufen bleibt neben dem Text kein Platz für die Knöpfe: Sie rutschen unter den Text,
+    /// damit der Name an Wortgrenzen umbricht statt Buchstabe für Buchstabe zu zerfallen.
+    private var stacksControls: Bool { Self.stacksControls(at: typeSize) }
+
+    nonisolated static func stacksControls(at size: DynamicTypeSize) -> Bool { size.isAccessibilitySize }
 
     var body: some View {
-        let status = ExpiryBadge.of(summary.earliestExpiry, today: today)
-        let unitStock = Fmt.quantity(summary.stock, unit: summary.baseUnit)
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: summary.category.symbol)
                 .frame(width: 28).foregroundStyle(.tint)
                 .accessibilityLabel(summary.category.title)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(summary.name).font(.headline)
-                if let detail = summary.detailLine {
-                    Text(detail).font(.subheadline).foregroundStyle(.secondary)
+            if stacksControls {
+                VStack(alignment: .leading, spacing: 8) {
+                    texts
+                    stepButtons
                 }
-                if summary.isConflict {
-                    Label("Bestand \(summary.stock.formatted()) (Konflikt)", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red).font(.subheadline)
-                } else {
-                    Text("\(unitStock) · \(Fmt.grams(summary.carbsTotalG)) Carbs").font(.subheadline)
-                }
-                if summary.hasStock { StatusLabel(status: status) }
-            }
-            Spacer(minLength: 4)
-            if !summary.isArchived {
-                HStack(spacing: 4) {
-                    Button { onStep(-1) } label: { Image(systemName: "minus.circle.fill").imageScale(.large) }
-                        .accessibilityLabel("Eins abbuchen")
-                    Button { onStep(+1) } label: { Image(systemName: "plus.circle.fill").imageScale(.large) }
-                        .accessibilityLabel("Eins zubuchen")
-                }
-                .buttonStyle(.borderless)
+            } else {
+                texts
+                Spacer(minLength: 4)
+                stepButtons
             }
         }
         .accessibilityElement(children: .contain)
+    }
+
+    private var texts: some View {
+        let status = ExpiryBadge.of(summary.earliestExpiry, today: today)
+        let unitStock = Fmt.quantity(summary.stock, unit: summary.baseUnit)
+        return VStack(alignment: .leading, spacing: 3) {
+            Text(summary.name).font(.headline)
+            if let detail = summary.detailLine {
+                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+            }
+            if summary.isConflict {
+                Label("Bestand \(summary.stock.formatted()) (Konflikt)", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red).font(.subheadline)
+            } else {
+                Text("\(unitStock) · \(Fmt.grams(summary.carbsTotalG)) Carbs").font(.subheadline)
+            }
+            if summary.hasStock { StatusLabel(status: status) }
+        }
+    }
+
+    @ViewBuilder private var stepButtons: some View {
+        if !summary.isArchived {
+            HStack(spacing: 4) {
+                Button { onStep(-1) } label: { Image(systemName: "minus.circle.fill").imageScale(.large) }
+                    .accessibilityLabel("Eins abbuchen")
+                Button { onStep(+1) } label: { Image(systemName: "plus.circle.fill").imageScale(.large) }
+                    .accessibilityLabel("Eins zubuchen")
+            }
+            .buttonStyle(.borderless)
+        }
     }
 }

@@ -1,5 +1,6 @@
 import CarbStockCore
 import Foundation
+import SwiftUI
 import Testing
 @testable import CarbStock
 
@@ -51,5 +52,14 @@ import Testing
         var r = row("Gel", flavor: "Zitrone")
         r.hasCaffeine = true
         #expect(r.displayName == "Gel · Zitrone · mit Koffein")
+    }
+
+    @Test func rowStacksControlsOnlyAtAccessibilitySizes() {
+        // Bei größter Schrift bliebe neben dem Namen kein Platz: Knöpfe unter den Text, Name bricht an Wortgrenzen um.
+        let normal: [DynamicTypeSize] = [.xSmall, .small, .medium, .large, .xLarge, .xxLarge, .xxxLarge]
+        for size in normal { #expect(!ProductRowView.stacksControls(at: size)) }
+        for size in [DynamicTypeSize.accessibility1, .accessibility3, .accessibility5] {
+            #expect(ProductRowView.stacksControls(at: size))
+        }
     }
 }
