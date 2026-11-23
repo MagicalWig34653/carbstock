@@ -62,7 +62,7 @@ private struct FakeSource: WorkoutSource {
     @Test func changedWorkoutUpdatesKeepsIgnoredFlag() async throws {
         _ = await service.refresh(from: FakeSource(fetch: .success([ride("A", minutes: 60)])))
         let id = service.activities()[0].id
-        try service.setIgnored(true, activityID: id)
+        try service.setIgnored(true, group: service.grouping().groups[0])
         _ = await service.refresh(from: FakeSource(fetch: .success([ride("A", minutes: 70)])))
         let a = service.activities()
         #expect(a.count == 1 && a[0].id == id && a[0].isIgnored && a[0].elapsedSeconds == 70 * 60)
@@ -119,6 +119,26 @@ private struct FakeSource: WorkoutSource {
         try BackupService(context: context).deleteAllData()
         #expect(service.activities().isEmpty)
         #expect(try context.fetch(FetchDescriptor<ActivityPairDecision>()).isEmpty)
+    }
+
+    @Test func ignoringAMergedRideHidesTheWholeRide() async throws {
+        _ = await service.refresh(from: FakeSource(fetch: .success([ride("W", start: 0), ride("S", start: 90)])))
+        let group = try #require(service.grouping().groups.first)
+        #expect(group.members.count == 2)
+        try service.setIgnored(true, group: group)
+        let hidden = service.grouping()
+        #expect(hidden.groups.count == 1 && hidden.counted.isEmpty && hidden.groups[0].primary.isIgnored)
+        try service.setIgnored(false, group: hidden.groups[0])
+        #expect(service.grouping().counted.count == 1)
+    }
+
+    @Test func deleteAllForgetsThatHealthWasConnected() async throws {
+        let suite = "carbstock.test.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(true, forKey: ActivityService.connectedKey)
+        try BackupService(context: context, defaults: defaults).deleteAllData()
+        #expect(defaults.bool(forKey: ActivityService.connectedKey) == false)
     }
 
     @Test func exportDoesNotContainImportedWorkouts() async throws {

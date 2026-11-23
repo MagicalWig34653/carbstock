@@ -16,6 +16,9 @@ final class ActivityService {
         case failed
     }
 
+    /// Device-local flag (UserDefaults): Health was read on this device, so opening "Fahrten" reads again on its own.
+    nonisolated static let connectedKey = "healthConnectedOnThisDevice"
+
     /// How far back a refresh looks (the longest forecast window is 84 days).
     nonisolated static let lookbackDays = 90
 
@@ -115,8 +118,11 @@ final class ActivityService {
         try context.save()
     }
 
-    func setIgnored(_ ignored: Bool, activityID: UUID) throws {
-        record(activityID)?.isIgnored = ignored
+    /// Hides or shows a whole ride: every entry of the group, so a merged ride cannot keep counting through its
+    /// other entries (the group's primary is the first entry that is not hidden).
+    func setIgnored(_ ignored: Bool, group: ActivityGroup) throws {
+        let ids = Set(group.members.map(\.id))
+        for r in records() where ids.contains(r.id) { r.isIgnored = ignored }
         try context.save()
     }
 

@@ -24,7 +24,7 @@ struct ActivitiesView: View {
     @Query private var decisions: [ActivityPairDecision]
     @Query private var sessions: [TrainingSession]
 
-    @AppStorage("healthConnectedOnThisDevice") private var connected = false
+    @AppStorage(ActivityService.connectedKey) private var connected = false
     @State private var loading = false
     @State private var message: String?
     @State private var confirmDelete = false
@@ -92,9 +92,9 @@ struct ActivitiesView: View {
                     GroupRow(group: group)
                         .swipeActions {
                             if group.primary.isIgnored {
-                                Button("Einblenden", systemImage: "eye") { run { try service.setIgnored(false, activityID: group.primary.id) } }
+                                Button("Einblenden", systemImage: "eye") { run { try service.setIgnored(false, group: group) } }
                             } else {
-                                Button("Ausblenden", systemImage: "eye.slash") { run { try service.setIgnored(true, activityID: group.primary.id) } }.tint(.orange)
+                                Button("Ausblenden", systemImage: "eye.slash") { run { try service.setIgnored(true, group: group) } }.tint(.orange)
                             }
                         }
                 }

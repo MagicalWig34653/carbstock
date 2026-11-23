@@ -18,9 +18,11 @@ final class BackupService {
     }
 
     private let context: ModelContext
+    private let defaults: UserDefaults
     private let now: () -> Date
 
-    init(context: ModelContext, now: @escaping () -> Date = { Date.now }) {
+    init(context: ModelContext, defaults: UserDefaults = .standard, now: @escaping () -> Date = { Date.now }) {
+        self.defaults = defaults
         self.context = context
         self.now = now
     }
@@ -186,6 +188,8 @@ final class BackupService {
         try context.delete(model: ImportedActivity.self)
         try context.delete(model: ActivityPairDecision.self)
         try context.save()
+        // Without this, opening "Fahrten" would read Health again on its own and bring the rides back.
+        defaults.removeObject(forKey: ActivityService.connectedKey)
     }
 }
 
