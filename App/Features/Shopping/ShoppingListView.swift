@@ -141,6 +141,7 @@ struct ShoppingEntryFormView: View {
                 }
                 if let errorText { Section { Text(errorText).foregroundStyle(.red) } }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Zur Einkaufsliste")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

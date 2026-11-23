@@ -34,6 +34,7 @@ struct ShoppingView: View {
                 case .history: PurchaseHistoryView()
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Einkauf")
             .toolbar {
                 if section == .list {

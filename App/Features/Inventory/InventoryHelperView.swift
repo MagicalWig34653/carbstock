@@ -27,6 +27,7 @@ struct InventoryHelperView: View {
                 case .count: CountView()
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Inventur")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Fertig") { dismiss() } } }

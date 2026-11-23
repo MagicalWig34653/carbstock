@@ -65,6 +65,7 @@ struct BoughtSheet: View {
                 }
                 if let errorText { Section { Text(errorText).foregroundStyle(.red) } }
             }
+            .keyboardDoneToolbar()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

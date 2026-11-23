@@ -167,6 +167,7 @@ struct AddBatchView: View {
             Form {
                 BatchFieldsSection(input: $input, unit: product.baseUnit)
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Charge hinzufügen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

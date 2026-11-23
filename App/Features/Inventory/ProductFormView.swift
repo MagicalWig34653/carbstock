@@ -75,6 +75,7 @@ struct ProductFormView: View {
                 }
                 if let saveError { Section { Text(saveError).foregroundStyle(.red) } }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Produkt anlegen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

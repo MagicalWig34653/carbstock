@@ -63,14 +63,27 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.linolaske.carbstock.tests
         GENERATE_INFOPLIST_FILE: YES
+  CarbStockUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - AppUITests
+    dependencies:
+      - target: CarbStock
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.linolaske.carbstock.uitests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   CarbStock:
     build:
       targets:
         CarbStock: all
         CarbStockTests: [test]
+        CarbStockUITests: [test]
     test:
       targets:
         - CarbStockTests
+        - CarbStockUITests
       commandLineArguments:
         "-CarbStockInMemory": true
