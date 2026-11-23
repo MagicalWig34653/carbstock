@@ -9,6 +9,7 @@ struct InventoryListView: View {
 
     @State private var filter = InventoryFilter()
     @State private var showingForm = false
+    @State private var showingHelper = false
     @State private var showingSettings = false
     @State private var errorText: String?
 
@@ -56,6 +57,7 @@ struct InventoryListView: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     filterMenu
+                    Button("Inventur", systemImage: "checklist") { showingHelper = true }
                     Button("Produkt anlegen", systemImage: "plus") { showingForm = true }
                 }
             }
@@ -63,6 +65,7 @@ struct InventoryListView: View {
                 if let errorText { Text(errorText).font(.footnote).foregroundStyle(.red).padding(8) }
             }
             .sheet(isPresented: $showingForm) { ProductFormView() }
+            .sheet(isPresented: $showingHelper) { InventoryHelperView() }
             .sheet(isPresented: $showingSettings) {
                 SettingsPlaceholderView(syncMode: syncMode, onClose: { showingSettings = false })
             }

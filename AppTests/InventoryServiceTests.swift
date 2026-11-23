@@ -278,4 +278,46 @@ import Testing
         let p = try service.createProduct(d)
         #expect(p.hasCaffeine && p.hasLactate)
     }
+
+    // Inventarisierungshelfer: Zähl-Durchgang (Spec 4.6)
+    @Test func countBooksOnlyTheDifferenceAsInventoryAdjustment() throws {
+        let p = try gel()
+        let a = try service.addBatch(to: p, quantity: 5, expiry: CalendarDay(year: 2027, month: 1, day: 1))
+        let b = try service.addBatch(to: p, quantity: 3, expiry: CalendarDay(year: 2027, month: 6, day: 1))
+        let booked = try service.applyCount(6, to: p)
+        #expect(booked.count == 1 && booked[0].typeRaw == MovementType.adjust.rawValue && booked[0].note == "Inventur")
+        #expect(service.stock(of: a) == 3 && service.stock(of: b) == 3 && service.stock(of: p) == 6)
+        // Zugang auf die FEFO-erste Charge
+        try service.applyCount(9, to: p)
+        #expect(service.stock(of: a) == 6 && service.stock(of: p) == 9)
+    }
+
+    @Test func countEqualToExpectedBooksNothing() throws {
+        let p = try gel()
+        try service.addBatch(to: p, quantity: 4)
+        #expect(try service.applyCount(4, to: p).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<StockMovement>()).filter { $0.typeRaw == MovementType.adjust.rawValue }.isEmpty)
+    }
+
+    @Test func countPreviewMatchesWhatIsBooked() throws {
+        let p = try gel()
+        try service.addBatch(to: p, quantity: 4)
+        #expect(service.countDifference(counted: 1, for: p) == -3)
+        #expect(service.countDifference(counted: 4, for: p) == 0)
+        #expect(service.countDifference(counted: 6, for: p) == 2)
+    }
+
+    @Test func countWithoutBatchBooksNothing() throws {
+        let p = try gel()
+        #expect(try service.applyCount(3, to: p).isEmpty)
+    }
+
+    @Test func countAcrossSeveralBatchesIsOneSave() throws {
+        let p = try gel()
+        let a = try service.addBatch(to: p, quantity: 2, expiry: CalendarDay(year: 2027, month: 1, day: 1))
+        let b = try service.addBatch(to: p, quantity: 4)
+        let booked = try service.applyCount(1, to: p)
+        #expect(booked.count == 2)
+        #expect(service.stock(of: a) == 0 && service.stock(of: b) == 1)
+    }
 }

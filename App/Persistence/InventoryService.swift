@@ -138,6 +138,28 @@ final class InventoryService {
         try adjust(by: -current, on: batch, note: "Korrektur Konflikt")
     }
 
+    /// Zähl-Durchgang (Spec 4.6): plan for the counted stock of one product (Core).
+    private func countPlan(counted: Int, for product: Product) -> [CountAdjustment] {
+        InventoryCount.plan(counted: counted, batches: activeBatches(of: product).compactMap(\.info),
+                            ledger: ledger(), today: today())
+    }
+
+    /// Difference between the counted and the expected stock (counted − expected), for the preview before booking.
+    func countDifference(counted: Int, for product: Product) -> Int {
+        counted - stock(of: product)
+    }
+
+    /// Books only the difference as `adjust` with the note "Inventur", in one save. Empty when nothing differs.
+    @discardableResult
+    func applyCount(_ counted: Int, to product: Product) throws -> [StockMovement] {
+        let batches = activeBatches(of: product)
+        let movements = countPlan(counted: counted, for: product).compactMap { a in
+            batches.first { $0.id == a.batchID }.map { insertMovement(.adjust, delta: a.delta, on: $0, note: "Inventur") }
+        }
+        if !movements.isEmpty { try context.save() }
+        return movements
+    }
+
     /// Quick booking −1/+1 on the product. −1 lands on the FEFO batch (earliest best-before, not expired);
     /// +1 returns to the first usable batch (fallback: first batch at all).
     @discardableResult

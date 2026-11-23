@@ -174,6 +174,23 @@ Jedes Feature hat eine ID (F-…), auf die Akzeptanzkriterien (Abschnitt 15) ver
 - **Ablauf einer Packliste:** Entwurf → Packen → Fertig. Eine fertige Packliste ist schreibgeschützt; Korrektur über normale Buchungen.
 - **Packliste ohne Session:** frei erstellbar („Ziel: 300 g Carbs“).
 
+### 4.6 Inventarisierungshelfer (Lino 23.11., Entscheidung auf der Karte „Inventarisierungshelfer“: Erstaufnahme und Zählen zusammen)
+
+Lino: „In CarbStock soll es auch einen Inventarisierungshelfer geben.“ Die Spec beschrieb bis dahin keinen Inventurablauf; auf Nachfrage gilt: **Erstaufnahme für Neues, Zähl-Durchgang für Vorhandenes.** Einstieg: Bestand → Symbol „Inventur“. Es gibt **kein neues Datenfeld**; der Helfer nutzt die vorhandenen Buchungen (`purchase` über Charge, `adjust`).
+
+- **Erstaufnahme:** Produkt wählen (oder „Neues Produkt anlegen“, das danach gewählt ist), Menge, optional MHD, „Charge erfassen“. Das Produkt bleibt gewählt, MHD-Einstellung bleibt, die Menge wird geleert: mehrere Chargen am Stück ohne Umweg über die Liste. Unter „Gerade erfasst“ steht, was in dieser Sitzung gebucht wurde. Jede Charge ist eine normale Zugangsbuchung wie bei „Charge hinzufügen“.
+- **Zählen:** Pro Produkt mit mindestens einer Charge: erwarteter Bestand (Summe der Buchungen), Feld „Gezählt“, Anzeige der Differenz. Leere Felder bleiben unberührt. „Differenzen buchen“ (mit Bestätigung) bucht **nur die Differenz** als `adjust` mit der Notiz „Inventur“, in einem Schritt. Danach eine Zusammenfassung (angepasst / ohne Abweichung / nicht gezählt). Rückgängig nur per Storno oder Korrektur wie jede Buchung. Produkte ohne Charge erscheinen nicht: Bestand legt man mit der Erstaufnahme an.
+- **Verteilung der Differenz auf Chargen** (Annahmen, Core `InventoryCount`, getestet):
+
+| Fall | Regel | Begründung |
+|---|---|---|
+| Mehr gezählt als erwartet | Zugang auf die erste nutzbare Charge in FEFO-Reihenfolge, sonst auf die erste Charge | Kein neuer Posten ohne Angaben; wie die Schnellbuchung +1 |
+| Weniger gezählt | Abzug in FEFO-Reihenfolge über Chargen mit Bestand | Welche Charge fehlt, ist unbekannt; die früheste ist die vorsichtige Annahme |
+| Abgelaufene Chargen | werden beim Abzug zuletzt angefasst | Sie tragen die Prognose ohnehin nicht (4.2) |
+| Chargen mit negativem Bestand | zählen in die Summe, werden nie weiter verringert | Konflikte (TV-8) löst „Korrektur buchen“ |
+| Archivierte Chargen | zählen weder im Soll noch bei der Verteilung | wie überall |
+| Gleicher Stand | keine Buchung | nichts doppelt |
+
 ---
 
 ## 5. Datenmodell (fachlich) **[Konkretisierung des Originals]**
