@@ -27,7 +27,7 @@ struct InventoryListView: View {
                     } description: {
                         Text("Lege dein erstes Gel, Pulver oder deinen ersten Riegel an.")
                     } actions: {
-                        Button("Produkt anlegen") { showingForm = true }.buttonStyle(.borderedProminent)
+                        Button("Produkt anlegen") { showingForm = true }.buttonStyle(.borderedProminent).tint(Color.actionFill)
                     }
                 } else if visible.isEmpty {
                     ContentUnavailableView.search(text: filter.search)
@@ -39,7 +39,7 @@ struct InventoryListView: View {
                                                onStep: { step($0, product, service) })
                             }
                             .swipeActions(edge: .trailing) {
-                                Button("−1", systemImage: "minus.circle") { step(-1, product, service) }.tint(.orange)
+                                Button("−1", systemImage: "minus.circle") { step(-1, product, service) }.tint(Color.actionFill)
                             }
                             .swipeActions(edge: .leading) {
                                 Button("+1", systemImage: "plus.circle") { step(+1, product, service) }.tint(.green)

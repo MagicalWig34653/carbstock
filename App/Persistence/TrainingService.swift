@@ -15,10 +15,13 @@ final class TrainingService {
 
     private let context: ModelContext
     private let today: () -> CalendarDay
+    private let now: () -> Date
 
-    init(context: ModelContext, today: @escaping () -> CalendarDay = { CalendarDay(Date.now, in: .current) }) {
+    init(context: ModelContext, today: @escaping () -> CalendarDay = { CalendarDay(Date.now, in: .current) },
+         now: @escaping () -> Date = { Date.now }) {
         self.context = context
         self.today = today
+        self.now = now
     }
 
     // MARK: Sessions
@@ -106,7 +109,8 @@ final class TrainingService {
     func userRates() -> [SessionType: Int] {
         let all = (try? context.fetch(FetchDescriptor<CarbRateOverride>())) ?? []
         var out: [SessionType: Int] = [:]
-        for r in all { if let t = SessionType(rawValue: r.typeRaw) { out[t] = r.carbsPerHour } }
+        // Älteste zuerst, damit bei zwei Datensätzen derselben Art der jüngere übrig bleibt.
+        for r in all.sorted(by: { $0.updatedAt < $1.updatedAt }) { if let t = SessionType(rawValue: r.typeRaw) { out[t] = r.carbsPerHour } }
         return out
     }
 
@@ -114,16 +118,17 @@ final class TrainingService {
     func setRate(_ perHour: Int?, for type: SessionType) throws {
         if let perHour, !TrainingLimits.carbsPerHour.contains(perHour) { throw Failure.rateOutOfRange }
         let all = (try? context.fetch(FetchDescriptor<CarbRateOverride>())) ?? []
-        let mine = all.filter { $0.typeRaw == type.rawValue }
-        // Heal duplicates (should not happen locally, but two records for one type must not survive).
+        // Newest first: the newest record is the one that stays; older duplicates must not survive.
+        let mine = all.filter { $0.typeRaw == type.rawValue }.sorted { $0.updatedAt > $1.updatedAt }
         for extra in mine.dropFirst() { context.delete(extra) }
         let isDefault = perHour == nil || perHour == CarbRate.builtIn(type).defaultPerHour
         if isDefault {
             if let first = mine.first { context.delete(first) }
         } else if let first = mine.first {
             first.carbsPerHour = perHour!
+            first.updatedAt = now()
         } else {
-            context.insert(CarbRateOverride(type: type, carbsPerHour: perHour!))
+            context.insert(CarbRateOverride(type: type, carbsPerHour: perHour!, updatedAt: now()))
         }
         try context.save()
     }

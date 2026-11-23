@@ -84,7 +84,7 @@ struct TemplateRow: View {
                 Text(entry.type.title)
                 Text("\(Fmt.duration(minutes: entry.durationMinutes)) · \(rate) g/h" + (validity.isEmpty ? "" : " · \(validity)"))
                     .font(.footnote).foregroundStyle(.secondary)
-                if ended { Text("Beendet – zählt nicht mehr").font(.caption).foregroundStyle(.orange) }
+                if ended { Text("Beendet – zählt nicht mehr").font(.caption).foregroundStyle(Color.warning) }
             }
             Spacer()
             Text(Fmt.grams(DemandCalculator.sessionDemandG(durationMinutes: entry.durationMinutes, carbsPerHour: rate)))

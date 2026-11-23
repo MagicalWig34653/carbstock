@@ -46,7 +46,7 @@ struct TrainingView: View {
                         } description: {
                             Text("Trag Fahrten ein oder lege eine Wochenvorlage an, damit die Prognose den Bedarf kennt.")
                         } actions: {
-                            Button("Session anlegen") { adding = true }.buttonStyle(.borderedProminent)
+                            Button("Session anlegen") { adding = true }.buttonStyle(.borderedProminent).tint(Color.actionFill)
                         }
                     }
                 }
@@ -101,7 +101,7 @@ struct TrainingView: View {
                 }
                 .swipeActions(edge: .trailing) {
                     Button("Löschen", systemImage: "trash", role: .destructive) { run { try service.delete(model) } }
-                    if info.status != .skipped { Button("Ausgefallen", systemImage: "xmark") { set(.skipped, model) }.tint(.orange) }
+                    if info.status != .skipped { Button("Ausgefallen", systemImage: "xmark") { set(.skipped, model) }.tint(Color.actionFill) }
                 }
         }
     }
@@ -134,7 +134,7 @@ struct SessionRow: View {
                 Text(info.status == .skipped ? "–" : Fmt.grams(demand)).font(.body.monospacedDigit())
                 if info.status != .planned {
                     Label(info.status.title, systemImage: info.status == .done ? "checkmark.circle.fill" : "xmark.circle")
-                        .font(.caption).foregroundStyle(info.status == .done ? .green : .orange)
+                        .font(.caption).foregroundStyle(info.status == .done ? .green : Color.warning)
                 }
             }
         }

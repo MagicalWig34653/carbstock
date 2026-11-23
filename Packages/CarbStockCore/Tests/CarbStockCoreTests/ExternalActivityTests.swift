@@ -95,6 +95,40 @@ import Testing
         #expect(ActivityMatcher.compare(act(.health, "H", minutes: 20), act(.strava, "S", start: 300, minutes: 20)) == .maybe)
     }
 
+    // Grenzen, die über AC-X3 hinausgehen (Entscheidung, siehe SPEC 7.6)
+
+    @Test func maybeOverlapBoundaryIs60Percent() {
+        let long = act(.health, "H", minutes: 100)
+        #expect(ActivityMatcher.compare(long, act(.strava, "S60", minutes: 60)) == .maybe)     // 60 % gilt noch
+        #expect(ActivityMatcher.compare(long, act(.strava, "S59", minutes: 59)) == .distinct)  // 59 %
+    }
+
+    /// Zwischen 5 und 15 Minuten Startabstand gilt „vielleicht“, aber nur bei sicherer Überlappung (≥ 80 %).
+    /// Mit 120-Minuten-Fahrten ist die Überlappung bei 15 Minuten Versatz 87,5 %, die Zeitgrenze ist also die einzige Hürde.
+    @Test func maybeStartBoundaryIs15Minutes() {
+        let base = act(.health, "H", minutes: 120)
+        #expect(ActivityMatcher.compare(base, act(.strava, "S", start: 900, minutes: 120)) == .maybe)     // 15:00 gilt noch
+        #expect(ActivityMatcher.compare(base, act(.strava, "S2", start: 901, minutes: 120)) == .distinct) // 15:01
+        // Bei 60-Minuten-Fahrten reicht die Überlappung bei 15 Minuten Versatz nicht (75 %): getrennt.
+        #expect(ActivityMatcher.compare(act(.health, "H", minutes: 60), act(.strava, "S", start: 900, minutes: 60)) == .distinct)
+    }
+
+    /// Überlappung wird gegen das längere Fenster gemessen: eine kurze Fahrt mitten in einer langen ist nicht „dieselbe“.
+    @Test func overlapIsMeasuredAgainstTheLongerWindow() {
+        let long = act(.health, "H", minutes: 100)
+        let short = act(.strava, "S", start: 600, minutes: 30) // komplett im langen Fenster, aber nur 30 % davon
+        #expect(ActivityMatcher.compare(long, short) == .distinct)
+        // gegen das kürzere gemessen wäre es 100 % und damit (fälschlich) sicher
+    }
+
+    /// Dauer 0 (kaputter Eintrag) wird nie als Duplikat oder „vielleicht“ gewertet, auch nicht bei gleichem Start.
+    @Test func zeroDurationIsNeverADuplicate() {
+        let zero = act(.health, "Z", minutes: 0)
+        #expect(ActivityMatcher.compare(zero, act(.strava, "S", minutes: 60)) == .distinct)
+        #expect(ActivityMatcher.compare(zero, act(.strava, "Z2", minutes: 0)) == .distinct)
+        #expect(ActivityGrouper.group([zero, act(.strava, "S", minutes: 60)]).groups.count == 2)
+    }
+
     @Test func sportMustBeCompatible() {
         let ride = act(.health, "H", sport: .cycling)
         #expect(ActivityMatcher.compare(ride, act(.strava, "S", sport: .running)) == .distinct)

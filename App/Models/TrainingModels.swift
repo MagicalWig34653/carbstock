@@ -75,10 +75,14 @@ final class CarbRateOverride {
     var typeRaw: String = SessionType.z2.rawValue
     var carbsPerHour: Int = 60
     var schemaVersion: Int = 1
+    /// Wann der Wert zuletzt geändert wurde: bei zwei Datensätzen für dieselbe Art gewinnt der jüngere (M4b).
+    /// Additiv mit Vorgabewert; bestehende Datensätze bleiben gültig.
+    var updatedAt: Date = Date.now
 
-    init(type: SessionType, carbsPerHour: Int) {
+    init(type: SessionType, carbsPerHour: Int, updatedAt: Date = Date.now) {
         self.typeRaw = type.rawValue
         self.carbsPerHour = carbsPerHour
+        self.updatedAt = updatedAt
     }
 }
 

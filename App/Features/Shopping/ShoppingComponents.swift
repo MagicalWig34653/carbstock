@@ -8,7 +8,7 @@ extension VerdictTone {
     var color: Color {
         switch self {
         case .buy: .green
-        case .partial: .orange
+        case .partial: Color.warning
         case .dontBuy: .red
         case .unknown: .secondary
         }
@@ -20,7 +20,7 @@ extension UserDecision {
         switch self {
         case .none: .secondary
         case .bought: .green
-        case .skipped: .orange
+        case .skipped: Color.warning
         }
     }
 }

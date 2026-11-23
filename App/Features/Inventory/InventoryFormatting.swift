@@ -53,7 +53,7 @@ extension ExpiryBadge {
     var color: Color {
         switch status {
         case .expired, .red: .red
-        case .yellow: .orange
+        case .yellow: Color.warning
         case .green: .green
         case .noExpiry: .secondary
         }

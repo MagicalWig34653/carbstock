@@ -18,13 +18,7 @@ struct CarbRatesView: View {
                     let builtIn = CarbRate.builtIn(type)
                     let current = userRates[type] ?? builtIn.defaultPerHour
                     VStack(alignment: .leading, spacing: 6) {
-                        Stepper(value: Binding(get: { current }, set: { set($0, type) }), in: TrainingLimits.carbsPerHour) {
-                            LabeledContent {
-                                Text("\(current) g/h").monospacedDigit()
-                            } label: {
-                                Label(type.title, systemImage: type.symbol)
-                            }
-                        }
+                        RateStepperRow(type: type, value: Binding(get: { current }, set: { set($0, type) }))
                         HStack {
                             Text(hint(builtIn)).font(.footnote).foregroundStyle(.secondary)
                             Spacer()

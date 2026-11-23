@@ -94,7 +94,7 @@ struct ActivitiesView: View {
                             if group.primary.isIgnored {
                                 Button("Einblenden", systemImage: "eye") { run { try service.setIgnored(false, group: group) } }
                             } else {
-                                Button("Ausblenden", systemImage: "eye.slash") { run { try service.setIgnored(true, group: group) } }.tint(.orange)
+                                Button("Ausblenden", systemImage: "eye.slash") { run { try service.setIgnored(true, group: group) } }.tint(Color.actionFill)
                             }
                         }
                 }
@@ -171,7 +171,7 @@ private struct SuggestionRow: View {
             Text("Gefahren: \(activity.summary)" + (difference == 0 ? "" : " (\(difference > 0 ? "+" : "−")\(abs(difference)) min)"))
                 .font(.footnote).foregroundStyle(.secondary)
             HStack {
-                Button("Erledigt", systemImage: "checkmark", action: accept).buttonStyle(.borderedProminent)
+                Button("Erledigt", systemImage: "checkmark", action: accept).buttonStyle(.borderedProminent).tint(Color.actionFill)
                 Button("Nein", action: dismiss).buttonStyle(.bordered)
             }
             .controlSize(.small)
@@ -188,7 +188,7 @@ private struct MaybePairRow: View {
             Text(pair.first.summary)
             Text(pair.second.summary)
             HStack {
-                Button("Dieselbe Fahrt", action: same).buttonStyle(.borderedProminent)
+                Button("Dieselbe Fahrt", action: same).buttonStyle(.borderedProminent).tint(Color.actionFill)
                 Button("Verschieden", action: different).buttonStyle(.bordered)
             }
             .controlSize(.small)

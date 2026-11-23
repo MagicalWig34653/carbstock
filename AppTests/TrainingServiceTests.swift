@@ -152,6 +152,37 @@ import Testing
         let shares = training.stockBreakdown()
         #expect(shares.map(\.category) == [.drink, .gel] && shares.map(\.carbsG) == [500, 100])
     }
+
+    // MARK: CarbRateOverride.updatedAt (M4b: jüngster gewinnt)
+
+    final class Clock { var now: Date; init(_ d: Date) { now = d } }
+
+    @Test func rateOverrideRemembersWhenItWasChanged() throws {
+        let clock = Clock(Date(timeIntervalSince1970: 1_800_000_000))
+        let service = TrainingService(context: context, today: { today }, now: { clock.now })
+        try service.setRate(90, for: .long)
+        let first = try #require(try context.fetch(FetchDescriptor<CarbRateOverride>()).first)
+        #expect(first.updatedAt == clock.now)
+        clock.now = clock.now.addingTimeInterval(3600)
+        try service.setRate(95, for: .long)
+        #expect(first.updatedAt == clock.now)
+    }
+
+    /// Zwei Datensätze für dieselbe Art (z. B. nach dem Zusammenführen): der jüngere gilt, egal in welcher Reihenfolge.
+    @Test func newestRateWinsWhenTwoRecordsExist() throws {
+        let t1 = Date(timeIntervalSince1970: 1_800_000_000)
+        let newer = CarbRateOverride(type: .long, carbsPerHour: 95); newer.updatedAt = t1.addingTimeInterval(60)
+        let older = CarbRateOverride(type: .long, carbsPerHour: 85); older.updatedAt = t1
+        context.insert(newer); context.insert(older)
+        try context.save()
+        #expect(training.userRates()[.long] == 95)
+
+        let service = TrainingService(context: context, today: { today }, now: { t1.addingTimeInterval(120) })
+        try service.setRate(90, for: .long) // räumt auf: ein Datensatz, mit dem neuen Wert
+        let all = try context.fetch(FetchDescriptor<CarbRateOverride>())
+        #expect(all.count == 1 && all[0].carbsPerHour == 90 && all[0].updatedAt == t1.addingTimeInterval(120))
+    }
+
 }
 
 @Suite struct TrainingLogicTests {

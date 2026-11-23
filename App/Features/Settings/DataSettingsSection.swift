@@ -44,7 +44,7 @@ struct DataSettingsSection: View {
     var body: some View {
         let sync = monitor.presentation
         Section {
-            Label(sync.title, systemImage: sync.symbol).foregroundStyle(sync.isProblem ? Color.orange : Color.primary)
+            Label(sync.title, systemImage: sync.symbol).foregroundStyle(sync.isProblem ? Color.warning : Color.primary)
             if let detail = sync.detail { Text(detail).font(.footnote).foregroundStyle(.secondary) }
             Text("Trainingsdaten (Sessions, Wochenvorlage, Packlisten) bleiben auf diesem Gerät.")
                 .font(.footnote).foregroundStyle(.secondary)

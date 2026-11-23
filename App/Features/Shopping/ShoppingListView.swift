@@ -26,7 +26,7 @@ struct ShoppingListView: View {
                     } description: {
                         Text("Setz ein Angebot nach einem Urteil „kaufen“ auf die Liste oder trag etwas von Hand ein.")
                     } actions: {
-                        Button("Eintrag hinzufügen") { adding = true }.buttonStyle(.borderedProminent)
+                        Button("Eintrag hinzufügen") { adding = true }.buttonStyle(.borderedProminent).tint(Color.actionFill)
                     }
                 }
             }
@@ -75,7 +75,7 @@ struct ShoppingListView: View {
             if !isOpen {
                 Label(item.state == .bought ? "Gekauft" : "Verworfen",
                       systemImage: item.state == .bought ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.footnote).foregroundStyle(item.state == .bought ? .green : .orange)
+                    .font(.footnote).foregroundStyle(item.state == .bought ? .green : Color.warning)
             } else {
                 Button("Gekauft …", systemImage: "checkmark.circle") { buying = item }
                     .buttonStyle(.bordered).controlSize(.small)
@@ -85,7 +85,7 @@ struct ShoppingListView: View {
         .accessibilityElement(children: .contain)
         .swipeActions(edge: .trailing) {
             if isOpen {
-                Button("Verwerfen", systemImage: "xmark") { drop(item) }.tint(.orange)
+                Button("Verwerfen", systemImage: "xmark") { drop(item) }.tint(Color.actionFill)
             } else {
                 Button("Entfernen", systemImage: "trash", role: .destructive) { remove(item) }
             }

@@ -33,7 +33,7 @@ struct PackListsView: View {
                 } description: {
                     Text("Aus einer Session oder einem freien Ziel (z. B. 300 g Carbs) berechnet die App, was du einpackst.")
                 } actions: {
-                    Button("Packliste anlegen") { adding = true }.buttonStyle(.borderedProminent)
+                    Button("Packliste anlegen") { adding = true }.buttonStyle(.borderedProminent).tint(Color.actionFill)
                 }
             }
             ForEach(lists) { list in
@@ -153,7 +153,7 @@ struct PackListFormView: View {
                     if !plan.items.isEmpty { LabeledContent("Summe", value: Fmt.grams(plan.totalCarbsG)).fontWeight(.semibold) }
                     if plan.shortfallG > 0 {
                         Label("Es fehlen ≈ \(Fmt.grams(plan.shortfallG)) Carbs im Bestand.", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.warning)
                     }
                 }
                 if let errorText { Section { Text(errorText).foregroundStyle(.red) } }
@@ -221,7 +221,7 @@ struct PackListDetailView: View {
                 LabeledContent("Ziel inkl. Reserve", value: Fmt.grams(list.targetCarbsG))
                 LabeledContent("Geplant", value: Fmt.grams(items.reduce(0) { $0 + $1.plannedCarbsG }))
                 if shortfall > 0 {
-                    Label("Es fehlen ≈ \(Fmt.grams(shortfall)) Carbs im Bestand.", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Label("Es fehlen ≈ \(Fmt.grams(shortfall)) Carbs im Bestand.", systemImage: "exclamationmark.triangle.fill").foregroundStyle(Color.warning)
                 }
             }
             Section {

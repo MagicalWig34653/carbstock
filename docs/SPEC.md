@@ -267,7 +267,7 @@ AppPreferences (Einstellungen)
 
 **WeeklyTemplateEntry [Vorschlag] ❓ O-08:** Wochentag, `type`, `durationMinutes`, optional `carbsPerHourOverride`, `validFrom`, `validUntil`.
 
-**Carbs/h je Typ:** Voreinstellungen leben **im Code** (Tabelle mit Standardwert + Bereich). Nur **Abweichungen des Nutzers** werden gespeichert (`CarbRateOverride`: `type`, `carbsPerHour`), damit nicht auf jedem Gerät ein eigener Standard-Datensatz entsteht (Doppel-Problem, 9.3).
+**Carbs/h je Typ:** Voreinstellungen leben **im Code** (Tabelle mit Standardwert + Bereich). Nur **Abweichungen des Nutzers** werden gespeichert (`CarbRateOverride`: `type`, `carbsPerHour`, `updatedAt`; additiv mit Vorgabewert, 23.11.), damit nicht auf jedem Gerät ein eigener Standard-Datensatz entsteht (Doppel-Problem, 9.3). Gibt es für eine Art zwei Datensätze, **gewinnt der jüngere** (`updatedAt`); beim nächsten Schreiben bleibt nur er übrig.
 
 ### 5.6 PackList / PackListItem
 
@@ -352,6 +352,18 @@ Eingabe: Angebot (Menge `q`, Gesamtpreis `P`, Carbs je Einheit `c`, MHD `e`), Ho
 | TV-6 | 20 Gele à 25 g (500 g), MHD in 14 Tagen, Bedarf 100 g/Woche, sonst kein Bestand | Verbrauch 200 g, **Verfallsmenge 300 g (12 Gele)** |
 | TV-7 | Packliste: Ziel 320 g (ohne Reserve), Anteile Gel 50 / Drink 30 / Riegel 20; Gel 25 g, Drink-Portion 40 g, Riegel 30 g | Runden: 6 Gele (150), 2 Drink (80), 2 Riegel (60) = 290 < 320 → größter Rest = Drink (96 − 80 = 16) → +1 Drink: **6 Gele + 3 Drink + 2 Riegel = 330 g** |
 | TV-8 | Zwei Geräte buchen gleichzeitig je −1 Gel bei Bestand 1 | nach Sync Bestand **−1**, sichtbarer Konflikt-Hinweis (9.3) |
+
+### 7.6 Duplikate externer Aktivitäten: Grenzen (Entscheidung 23.11.)
+Quelle der Grundregel: `docs/TRAININGSQUELLEN.md` AC-X3 (Start ≤ 5 min, Überlappung ≥ 80 %, vereinbare Sportart). Die folgenden Grenzen stehen dort **nicht** und sind eine Entscheidung der Hauptsession (Begründung im Board, Karte „Review-Nacharbeit“); sie sind in `ExternalActivityTests` festgehalten:
+
+| Grenze | Wert | Begründung |
+|---|---|---|
+| „Vielleicht doppelt“, Überlappung | ab **60 %** (bei Start ≤ 5 min) | AC-X3 nennt „knapp verfehlt“ ohne Zahl; 60 % ist die engste Marke, bei der der Nutzer eine Rückfrage noch als sinnvoll erlebt. Darunter sind es sicher zwei Fahrten. |
+| „Vielleicht doppelt“, Startabstand | bis **15 min** (bei Überlappung ≥ 80 %) | Uhr und Radcomputer starten oft Minuten versetzt; mehr als 15 min mit fast gleichem Fenster ist unplausibel für zwei Fahrten, aber ein Zeitzonen- oder Uhrenfehler ist denkbar, daher Rückfrage statt Zusammenführen. |
+| Überlappung gegen | das **längere** der beiden Fenster | Gegen das kürzere gemessen würde eine kurze Fahrt mitten in einer langen als „dieselbe“ gelten und fiele still aus der Zählung. Der strengere Maßstab schützt vor verlorenen Fahrten. |
+| Dauer 0 | **nie** doppelt, nie „vielleicht“ | Ein Eintrag ohne Dauer hat kein Fenster; ihn mit einer echten Fahrt zusammenzulegen wäre Raten. Er bleibt getrennt sichtbar. |
+
+Grundsatz bleibt: Nichts wird gelöscht; im Zweifel zählen beide, bis der Nutzer entscheidet (AC-X4). Die Werte sind Konstanten im Core (`ActivityMatcher`) und lassen sich ohne Datenänderung anpassen.
 
 ---
 
@@ -516,7 +528,8 @@ Archivieren statt Löschen für Produkt und Charge; Buchungen werden nie einzeln
 - Keine OCR/Barcode-Erkennung (V2).
 - Keine komplexe Multi-User-Rechte.
 - ~~Keine Offline-Multi-Geräte-Sync-Komplexität (reicht simple Cloud oder Lokal + Import/Export).~~ **Geändert:** Auf Vorgabe von Lino ist **iCloud-Sync über CloudKit im MVP**. Die Komplexität wird durch den buchungsbasierten Entwurf (9.3) klein gehalten; ein eigenes Sync-System wird **nicht** gebaut. Export/Import bleibt als Rückfall (9.6).
-- **[Vorschlag, zur Bestätigung]** Ebenfalls nicht in V1: Android, Web, Apple Watch, Widgets, Siri/Kurzbefehle, Mac, HealthKit-Anbindung, Team-Freigaben.
+- **[Vorschlag, zur Bestätigung]** Ebenfalls nicht in V1: Android, Web, Apple Watch, Widgets, Siri/Kurzbefehle, Mac, Team-Freigaben.
+- **HealthKit (Stand 23.11., ersetzt „nicht in V1“):** Ab M9c liest die App Radfahrten aus Apple Health, **nur lesen** (Beginn, Dauer, Sportart), lokal im Store „Imports“, nie in iCloud, Sicherung oder Export (Abschnitte 10, 11.3, 11.4). Geschrieben wird weiter **nichts** in HealthKit (AC-D6). Strava bleibt nachrangig (M9b, `docs/TRAININGSQUELLEN.md`).
 
 ---
 
@@ -763,6 +776,8 @@ Priorität **P1** = blockiert den Start, **P2** = blockiert ein Feature, **P3** 
 - **Privater CloudKit-Bereich:** vom Nutzer-iCloud-Konto verwalteter Speicher der App; der Entwickler betreibt dafür keinen Server.
 
 ## Anhang C: Entwurf einer Anfrage an Apple **(nicht gesendet; Absenden nur durch Lino)**
+
+> **Hinweis 23.11.:** Der Entwurf stammt aus der Zeit vor M9c und sagt „lesen kein HealthKit“. Vor einem Absenden anpassen: Die App liest seit M9c Radfahrten aus Apple Health (nur lesen, lokal).
 
 > Wir entwickeln eine iOS-App zur Verwaltung von Sport-Ernährungsvorräten (Gele, Riegel, Pulver). Die App synchronisiert Produkte, Chargen, Preise und Ablaufdaten über den privaten CloudKit-Bereich des Nutzers. Zusätzlich möchten wir optional **manuell eingegebene Trainings-Planungsdaten** (geplantes Datum, Trainingstyp, Dauer in Minuten, Ziel-Kohlenhydrate pro Stunde) in demselben privaten Bereich ablegen, um den Vorratsbedarf auf mehreren Geräten desselben Nutzers zu berechnen. Wir erfassen **keine** Körper-, Vital-, Leistungs- oder Gesundheitsdaten und lesen **kein** HealthKit.
 > Frage: Fallen diese Planungsdaten unter „personal health information“ (App Review Guideline 5.1.3(ii)) bzw. „sensitive, individually-identifiable health information“ (DPLA 3.3.3(D)), sodass sie nicht in iCloud/CloudKit gespeichert werden dürfen? Falls ja: Gibt es eine schriftliche Ausnahme oder ein empfohlenes Vorgehen?

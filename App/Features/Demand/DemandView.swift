@@ -20,7 +20,7 @@ extension Ampel {
     var color: Color {
         switch self {
         case .enough: .green
-        case .tight: .orange
+        case .tight: Color.warning
         case .shortage: .red
         }
     }
@@ -80,7 +80,7 @@ struct DemandView: View {
                         } description: {
                             Text("Bitte trag Sessions oder eine Wochenvorlage ein. Ohne Bedarf nennt die App keine Reichweite.")
                         } actions: {
-                            Button("Zum Training") { router.selectedTab = .training }.buttonStyle(.borderedProminent)
+                            Button("Zum Training") { router.selectedTab = .training }.buttonStyle(.borderedProminent).tint(Color.actionFill)
                         }
                     }
                 } else {
@@ -130,7 +130,7 @@ struct DemandView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(names[loss.batchID] ?? "Charge").font(.body)
                     Text("\(loss.lostQuantity) Stück · \(Fmt.grams(loss.lostCarbsG)) Carbs laufen am \(Fmt.date(loss.expiry)) unverbraucht ab")
-                        .font(.footnote).foregroundStyle(.orange)
+                        .font(.footnote).foregroundStyle(Color.warning)
                 }
                 .accessibilityElement(children: .combine)
             }

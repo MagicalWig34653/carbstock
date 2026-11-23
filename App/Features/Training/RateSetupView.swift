@@ -23,13 +23,7 @@ struct RateSetupView: View {
                         let builtIn = CarbRate.builtIn(type)
                         let current = values[type] ?? builtIn.defaultPerHour
                         VStack(alignment: .leading, spacing: 4) {
-                            Stepper(value: Binding(get: { current }, set: { values[type] = $0 }), in: TrainingLimits.carbsPerHour) {
-                                LabeledContent {
-                                    Text("\(current) g/h").monospacedDigit()
-                                } label: {
-                                    Label(type.title, systemImage: type.symbol)
-                                }
-                            }
+                            RateStepperRow(type: type, value: Binding(get: { current }, set: { values[type] = $0 }))
                             Text(builtIn.range.map { "Vorschlag \(builtIn.defaultPerHour) g/h, üblicher Bereich \($0.lowerBound)–\($0.upperBound)" }
                                  ?? "Vorschlag \(builtIn.defaultPerHour) g/h")
                                 .font(.footnote).foregroundStyle(.secondary)

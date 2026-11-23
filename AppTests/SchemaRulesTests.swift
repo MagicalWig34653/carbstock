@@ -1,4 +1,5 @@
 import SwiftData
+import Foundation
 import Testing
 @testable import CarbStock
 
@@ -94,6 +95,15 @@ import Testing
         #expect(names.contains("hasCaffeine") && names.contains("hasLactate") && names.contains("flavor"))
         let p = Product(name: "Gel", category: .gel, baseUnit: .piece, carbsPerPortionG: 25)
         #expect(!p.hasCaffeine && !p.hasLactate)
+    }
+
+    /// M4b: `CarbRateOverride.updatedAt` ist additiv (Vorgabewert), nichts Bestehendes fällt weg.
+    @Test func carbRateOverrideHasUpdatedAtAdditively() throws {
+        let entity = try #require(Self.training.entities.first { $0.name == "CarbRateOverride" })
+        let names = Set(entity.attributes.map(\.name))
+        #expect(names.isSuperset(of: ["typeRaw", "carbsPerHour", "schemaVersion", "updatedAt"]))
+        let before = Date.now
+        #expect(CarbRateOverride(type: .z2, carbsPerHour: 60).updatedAt >= before)
     }
 
     /// M5 added fields to two existing records: additive means optional (or defaulted), nothing renamed or removed.
