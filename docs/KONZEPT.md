@@ -62,7 +62,7 @@ Drei Fragen auf dem Gerät beantworten – *reicht mein Vorrat?*, *was zuerst ve
 ## 4. Datenschutz und Apple-Vorgaben – differenziert
 
 **Was sicher ist (Belege in Spec 11/13):**
-- Körper-/Vital-/HealthKit-Daten dürfen nicht nach iCloud (Review 5.1.3(ii), DPLA 3.3.3(D)). CarbStock erfasst solche Daten **gar nicht** (Schema-Test AC-D4) und nutzt kein HealthKit.
+- Körper-/Vital-/HealthKit-Daten dürfen nicht nach iCloud (Review 5.1.3(ii), DPLA 3.3.3(D)). CarbStock erfasst solche Daten **gar nicht** (Schema-Test AC-D4). Einzige Ausnahme seit M9c: Apple Health wird **nur gelesen** (Radfahrten, Beginn und Dauer), lokal im Store „Imports“, nie in iCloud, Export oder Geräte-Backup (Entscheidung 21.11.2026, `docs/TRAININGSQUELLEN.md`).
 - Produkte, Chargen, Preise, MHD, Einkaufsliste sind keine Gesundheitsdaten → iCloud unkritisch.
 - Benachrichtigungen dürfen nicht erzwungen werden (5.1.2(i)) → Berechtigung erst beim Einschalten, In-App-Hinweis als Rückfall.
 - Datenschutzerklärung muss in der App **und** in App Store Connect verlinkt sein (5.1.1(i)).

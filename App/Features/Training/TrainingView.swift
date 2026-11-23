@@ -57,6 +57,9 @@ struct TrainingView: View {
                     NavigationLink { CarbRatesView() } label: {
                         Label("Carbs pro Stunde", systemImage: "gauge.with.dots.needle.50percent")
                     }
+                    NavigationLink { ActivitiesView() } label: {
+                        Label("Fahrten aus Apple Health", systemImage: "heart.text.square")
+                    }
                     NavigationLink { PackListsView() } label: {
                         Label("Packlisten", systemImage: "checklist")
                     }

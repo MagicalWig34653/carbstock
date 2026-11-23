@@ -24,7 +24,7 @@ Bundle-ID `de.linolaske.carbstock`, iCloud-Container `iCloud.de.linolaske.carbst
 ## Harte Regeln
 - **CloudKit-Schema nur additiv** (Spec 9.2): keine `@Attribute(.unique)`, alle Attribute mit Standardwert oder optional, alle Beziehungen optional mit Gegenbeziehung. Gespeicherte Eigenschaften nie umbenennen oder löschen. `SchemaRulesTests` prüft das.
 - **Training bleibt lokal** (O-01 Option B): `TrainingSession`, `WeeklyTemplateRecord`, `CarbRateOverride`, `PackList`, `PackListItem` liegen in der Konfiguration „Training“ ohne CloudKit. Keine Beziehungen zwischen den Konfigurationen, nur UUIDs.
-- **Keine Gesundheitsdaten** (Gewicht, Puls, Leistung, Kalorien, Standort, HealthKit) erfassen oder synchronisieren. Kein HealthKit, keine Drittanbieter-SDKs, kein Analytics/Tracking, keine Netzwerkzugriffe außer CloudKit.
+- **Keine Gesundheitsdaten** (Gewicht, Puls, Leistung, Kalorien, Standort) erfassen oder synchronisieren. **Einzige Ausnahme (Maintainer-Entscheidung 21.11.2026): Apple Health nur lesen** – ausschließlich Radfahrten (`HKWorkout`, Typ cycling) mit Beginn und Dauer, nichts schreiben, nichts nach iCloud, in Export oder Geräte-Backup (Store „Imports“, lokal, vom Backup ausgenommen). Keine Drittanbieter-SDKs, kein Analytics/Tracking, keine Netzwerkzugriffe außer CloudKit.
 - **Buchungen sind unveränderlich.** Bestand ist immer Σ delta. Korrektur = `reversal`/`adjust`.
 - Geld in Cent (Int), Mengen in Int der Basiseinheit, Carbs als Double; Rundung nur in der Anzeige.
 - Rechenlogik gehört in `CarbStockCore` und wird dort test-first geschrieben (Testvektoren der Spec als Tests).

@@ -16,7 +16,8 @@ iCloud-Container `iCloud.de.linolaske.carbstock` (Development + Production), Clo
    Capabilities einschalten:
    - **iCloud** → „Include CloudKit support“ → Container `iCloud.de.linolaske.carbstock` zuordnen
    - **Push Notifications** (nötig für CloudKit-Stille-Benachrichtigungen; es gibt keinen eigenen Push-Server)
-   - sonst nichts (kein HealthKit, kein Sign in with Apple, keine App Groups)
+   - **HealthKit** (ab M9c, nur Lesen, ohne Clinical Health Records): Xcode ergänzt die Capability beim nächsten signierten Archiv in der App-ID automatisch; vorher Lino informieren
+   - sonst nichts (kein Sign in with Apple, keine App Groups)
 
 Alternative: Projekt in Xcode öffnen (`xcodegen generate`, dann `CarbStock.xcodeproj`), mit dem Konto anmelden und einmal auf ein Gerät bauen – die automatische Signierung legt App ID und Container dann selbst an. Danach im Portal prüfen, ob iCloud/CloudKit und Push aktiv sind.
 

@@ -43,6 +43,8 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
         # Only Apple system frameworks (CloudKit/TLS): exempt encryption.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        # Apple Health (M9c): read-only, cycling workouts, start and duration only. Nothing is written or synced.
+        INFOPLIST_KEY_NSHealthShareUsageDescription: "CarbStock liest deine Radfahrten (Beginn und Dauer) aus Apple Health, damit du geplante Sessions mit einem Tipp als erledigt markieren kannst. Es werden keine Gesundheitsdaten geschrieben, gespeichert oder per iCloud synchronisiert."
     info:
       path: App/Info.plist
       properties:

@@ -444,7 +444,7 @@ Archivieren statt Löschen für Produkt und Charge; Buchungen werden nie einzeln
 | Sessions (Datum, Typ, Dauer, g/h), Wochenvorlage | **Grauzone** (Fitness-Planung) | **❓ O-01** |
 | Packlisten (Bezug zu Sessions) | Grauzone, weil sie Sessionzeitpunkte spiegeln | wie O-01 |
 | Einstellungen | keiner | lokal/iCloud |
-| HealthKit/Bewegungsdaten | **ja** | V1 nicht verwendet; Regeln in 11.4 |
+| HealthKit/Bewegungsdaten | **ja** | ab M9c **nur gelesen**: Radfahrten (Beginn, Dauer), lokal im Store „Imports“, nie iCloud/Export/Backup; Regeln in 11.4 und `docs/TRAININGSQUELLEN.md` |
 
 ### 10.2 Grundsätze
 - **Keine** Telemetrie, kein Analytics, keine Werbung, kein Tracking, keine Drittanbieter-SDKs (Konsequenz: kein App-Tracking-Transparency-Dialog nötig).

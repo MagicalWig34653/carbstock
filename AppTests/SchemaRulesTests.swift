@@ -6,7 +6,8 @@ import Testing
 @Suite struct SchemaRulesTests {
     static let inventory = Schema(Stores.inventoryTypes)
     static let training = Schema(Stores.trainingTypes)
-    static let all = Schema(Stores.inventoryTypes + Stores.trainingTypes)
+    static let imports = Schema(Stores.importTypes)
+    static let all = Schema(Stores.inventoryTypes + Stores.trainingTypes + Stores.importTypes)
 
     @Test func noUniqueConstraints() {
         for entity in Self.all.entities {
@@ -60,6 +61,19 @@ import Testing
                 #expect(inventoryNames.contains(relationship.destination), "\(entity.name) points outside Inventory")
             }
         }
+    }
+
+    /// Imports (Apple Health copies) live in their own local configuration: no overlap, no relationships (AC-X1).
+    @Test func importTypesAreSeparateAndStoreOnlyAllowedFields() throws {
+        let importNames = Set(Self.imports.entities.map(\.name))
+        #expect(importNames == ["ImportedActivity", "ActivityPairDecision"])
+        #expect(importNames.isDisjoint(with: Self.inventory.entities.map(\.name)))
+        #expect(importNames.isDisjoint(with: Self.training.entities.map(\.name)))
+        for entity in Self.imports.entities { #expect(entity.relationships.isEmpty, "\(entity.name) hat Beziehungen") }
+        let activity = try #require(Self.imports.entities.first { $0.name == "ImportedActivity" })
+        let allowed: Set<String> = ["id", "sourceRaw", "externalID", "start", "movingSeconds", "elapsedSeconds", "sportRaw", "title",
+                                    "isIgnored", "isMissingAtSource", "suggestionHandled", "linkedSessionID", "importedAt", "schemaVersion"]
+        #expect(Set(activity.attributes.map(\.name)) == allowed)
     }
 
     /// M5 added fields to two existing records: additive means optional (or defaulted), nothing renamed or removed.

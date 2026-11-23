@@ -169,7 +169,7 @@ final class BackupService {
 
     // MARK: Delete everything (AC-D3)
 
-    /// Deletes every record of both stores. With CloudKit mirroring the deletions are propagated to the private database.
+    /// Deletes every record of all stores. With CloudKit mirroring the deletions are propagated to the private database.
     func deleteAllData() throws {
         // Children first so nothing depends on a cascade that has not run yet.
         try context.delete(model: StockMovement.self)
@@ -182,6 +182,9 @@ final class BackupService {
         try context.delete(model: TrainingSession.self)
         try context.delete(model: WeeklyTemplateRecord.self)
         try context.delete(model: CarbRateOverride.self)
+        // Imported workouts (Imports store) are local copies of Health data: they go too (AC-X6, AC-D3).
+        try context.delete(model: ImportedActivity.self)
+        try context.delete(model: ActivityPairDecision.self)
         try context.save()
     }
 }
