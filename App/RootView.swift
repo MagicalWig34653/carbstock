@@ -35,9 +35,10 @@ struct RootView: View {
         .onChange(of: changeToken) { _, _ in Task { await scheduler.rebuild(context: context) } }
     }
 
-    /// Tests and sample-data runs start without the setup sheet.
+    /// Tests and sample-data runs start without the setup sheet (`-CarbStockShowSetup` shows it anyway, for UI tests).
     private static var suppressSetup: Bool {
         let args = ProcessInfo.processInfo.arguments
+        if args.contains("-CarbStockShowSetup") { return false }
         return args.contains("-CarbStockInMemory") || args.contains("-CarbStockSampleData")
     }
 
