@@ -86,7 +86,7 @@ struct DemandView: View {
                 } else {
                     runwaySection(statement, today: today, report: report)
                 }
-                windowsSection(report)
+                if DemandScreen.showsForecast(report) { windowsSection(report) }
                 if !report.simulation.losses.isEmpty { lossSection(report.simulation) }
                 if let gap = report.simulation.supplyGap { gapSection(gap) }
                 categorySection()
@@ -203,5 +203,14 @@ struct WindowRow: View {
         .font(.subheadline)
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Wann das Bedarf-Tab die Prognose zeigt (reine Logik, getestet).
+enum DemandScreen {
+    /// Ohne Bedarf und ohne nutzbaren Vorrat gibt es nichts zu rechnen: dann nur der Leerzustand, keine Zeilen aus Nullen.
+    static func showsForecast(_ report: ForecastReport) -> Bool {
+        report.windows.contains { $0.demandG > 0 || $0.usableStockG > 0 }
+            || !report.simulation.losses.isEmpty || report.simulation.supplyGap != nil
     }
 }
