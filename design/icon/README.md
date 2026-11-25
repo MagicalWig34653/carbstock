@@ -8,10 +8,11 @@ Noch nichts davon ist im Asset-Katalog. Dort kommt erst der gewählte Entwurf hi
 |---|---|---|---|---|
 | A | [Beutel mit Gels](a-beutel/tafel.jpg) | Tüte mit gezacktem Rand, zwei Gels schauen heraus | Trifft „Tüte mit Gel“, klare Silhouette, Orange wie die App-Akzentfarbe | Gels werden unter 60 px zu Farbflecken |
 | B | [Musette](b-musette/tafel.jpg) | Verpflegungsbeutel aus dem Radsport, schräg am Gurt | Eindeutig Radsport | Am meisten Details, klein und getönt am unruhigsten |
-| C | [Trikottasche](c-trikottasche/tafel.jpg) | Rückentaschen mit drei Gels | Farbig, zeigt „Vorrat“ | Keine Tüte; getönt wenig Kontrast |
+| C v2 | [Trikottasche](c-trikottasche/tafel.jpg) | Drei Rückentaschen, in jeder ein Gel | Farbig, zeigt „Vorrat“ | Getönt wenig Kontrast; in 40 px viele kleine Teile |
 | D | [Einzelnes Gel](d-einzelgel/tafel.jpg) | Ein Gel mit Tropfen | Am besten lesbar in 40 px | Kein Beutel; kann als Tube oder Flasche gelesen werden |
 
-**Empfehlung: A.**
+**Gewählt: C**, mit der Änderung, dass jedes Gel in seiner eigenen Tasche sitzt statt auf der Naht (v2, wartet auf Abnahme).
+`pruefen.py` prüft diesen Abstand.
 
 ## Aufbau
 Je Entwurf liegt unter `<entwurf>/CarbStock.icon` ein Icon-Composer-Paket mit SVG-Ebenen: Verlauf für hell und dunkel,

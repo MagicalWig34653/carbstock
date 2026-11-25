@@ -68,7 +68,7 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 1. **M7 Rest:** Einstellungen über iCloud-KVS (O-24) bewusst noch nicht gebaut: es gibt keine synchronisierte Einstellung (Farbschwellen, Horizont, Reserve haben keine Oberfläche; Carbs/h und Erinnerungen sind gerätelokal). Baut man den `SettingsStore` jetzt, hat er keinen Nutzer. Wird mit der ersten solchen Einstellung gebaut; Prüfung am Gerät (Spike S1) liegt bei Lino.
 2. **M4b Rest:** Englisch-Frage O-21 vor dem externen TestFlight. (Neutrale Leerzustände: erledigt 24.11., siehe Tabelle.)
 3. **M9 Trainingsquellen:** M9a (Core) und M9c (Health lesen) stehen; Strava (M9b) wartet auf Linos Wahl A/B/C und ist laut Lino nachrangig: `docs/TRAININGSQUELLEN.md`.
-4. **M8:** App-Icon (**Lino wählt** aus vier Entwürfen in `design/icon/`, Empfehlung A; erst danach in den Asset-Katalog), Barrierefreiheit, Datenschutzerklärung, TestFlight (auch extern) nach Freigabe des Maintainers.
+4. **M8:** App-Icon (Lino hat Entwurf C gewählt; **C v2 wartet auf Abnahme**, `design/icon/c-trikottasche/`; erst danach in den Asset-Katalog), Barrierefreiheit, Datenschutzerklärung, TestFlight (auch extern) nach Freigabe des Maintainers.
 5. **Spikes S1/S3/S4–S7** auf echten Geräten.
 
 ## Wartet auf Lino (Board-Fragen, nicht blockierend)

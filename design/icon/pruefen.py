@@ -7,6 +7,7 @@ oder eigene Unschärfen), Renderings hell/dunkel/getönt in 1024 px, die sich un
 """
 import hashlib
 import json
+import math
 import re
 import struct
 import sys
@@ -15,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 RENDERS = ["hell", "dunkel", "getoent-hell", "getoent-dunkel", "klar-hell"]
 SMALL = [180, 120, 87, 60, 40]
+RAND = 20  # Mindestabstand Gel–Naht in Punkten auf 1024
 FORBIDDEN = ["<text", "<image", "<filter", "<mask", "<foreignObject", "blur("]
 
 
@@ -74,11 +76,36 @@ def check(design):
     return problems
 
 
+def taschen(design):
+    """C: Jedes Gel sitzt in seiner eigenen Rückentasche und berührt keine Naht (Rückmeldung zum ersten Review)."""
+    assets = design / "CarbStock.icon" / "Assets"
+    naehte = sorted((float(x), float(x) + float(w)) for x, w, h in re.findall(
+        r'<rect x="([-\d.]+)" y="[-\d.]+" width="([\d.]+)" height="([\d.]+)"', (assets / "naehte.svg").read_text())
+        if float(h) > float(w))
+    faecher = [(links[1], rechts[0]) for links, rechts in zip(naehte, naehte[1:])]
+    if len(faecher) != 3:
+        faecher = [(a, b) for a, b in zip([0] + [n[1] for n in naehte], [n[0] for n in naehte] + [1024])]
+    belegt, problems = [], []
+    for cx, angle, scale in re.findall(r'd="M-62 14[^"]*" fill="[^"]*" transform="translate\(([\d.]+) [\d.]+\) '
+                                       r'rotate\(([-\d.]+)\) scale\(([\d.]+)\)"', (assets / "gele.svg").read_text()):
+        a, s = math.radians(float(angle)), float(scale)
+        xs = [float(cx) + s * (x * math.cos(a) - y * math.sin(a)) for x in (-100, 100) for y in (0, 460)]
+        fach = [i for i, (von, bis) in enumerate(faecher) if von + RAND <= min(xs) and max(xs) <= bis - RAND]
+        if not fach:
+            problems.append(f"{design.name}: Gel bei x={cx} liegt auf oder zu nah an einer Naht ({min(xs):.0f}–{max(xs):.0f})")
+        belegt += fach
+    if sorted(belegt) != [0, 1, 2]:
+        problems.append(f"{design.name}: nicht je ein Gel in drei Taschen (belegt: {sorted(belegt)})")
+    return problems
+
+
 def main():
     designs = sorted(p for p in ROOT.iterdir() if p.is_dir() and re.match(r"[a-d]-|[e-z]-", p.name))
     problems = [f"nur {len(designs)} Entwürfe (mindestens 4)"] if len(designs) < 4 else []
     for design in designs:
         problems += check(design)
+        if design.name == "c-trikottasche":
+            problems += taschen(design)
     if not (ROOT / "uebersicht.jpg").exists():
         problems.append("uebersicht.jpg fehlt")
     for problem in problems:

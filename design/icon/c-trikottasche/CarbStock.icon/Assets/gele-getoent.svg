@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <path d="M-62 14L-51.7 0L-41.3 14L-31.0 0L-20.7 14L-10.3 0L0.0 14L10.3 0L20.7 14L31.0 0L41.3 14L51.7 0L62.0 14V58C62 98 100 100 100 148V446L88.9 460L77.8 446L66.7 460L55.6 446L44.4 460L33.3 446L22.2 460L11.1 446L0.0 460L-11.1 446L-22.2 460L-33.3 446L-44.4 460L-55.6 446L-66.7 460L-77.8 446L-88.9 460L-100.0 446V148C-100 100-62 98-62 58Z" fill="#C4C4C4" transform="translate(282 226) rotate(-6) scale(1.0)"/>
-  <rect x="-62" y="38" width="124" height="11" rx="0" fill="#FFFFFF" transform="translate(282 226) rotate(-6) scale(1.0)"/>
-  <rect x="-100" y="190" width="200" height="164" rx="0" fill="#FFFFFF" transform="translate(282 226) rotate(-6) scale(1.0)"/>
-  <rect x="-100" y="408" width="200" height="11" rx="0" fill="#FFFFFF" transform="translate(282 226) rotate(-6) scale(1.0)"/>
-  <path d="M0-62C20-34 44-8 44 18A44 44 0 1 1-44 18C-44-8-20-34 0-62Z" fill="#5A5A5A" transform="translate(282 226) rotate(-6) scale(1.0) translate(0 278)"/>
-  <path d="M-62 14L-51.7 0L-41.3 14L-31.0 0L-20.7 14L-10.3 0L0.0 14L10.3 0L20.7 14L31.0 0L41.3 14L51.7 0L62.0 14V58C62 98 100 100 100 148V446L88.9 460L77.8 446L66.7 460L55.6 446L44.4 460L33.3 446L22.2 460L11.1 446L0.0 460L-11.1 446L-22.2 460L-33.3 446L-44.4 460L-55.6 446L-66.7 460L-77.8 446L-88.9 460L-100.0 446V148C-100 100-62 98-62 58Z" fill="#A4A4A4" transform="translate(742 226) rotate(6) scale(1.0)"/>
-  <rect x="-62" y="38" width="124" height="11" rx="0" fill="#FFFFFF" transform="translate(742 226) rotate(6) scale(1.0)"/>
-  <rect x="-100" y="190" width="200" height="164" rx="0" fill="#FFFFFF" transform="translate(742 226) rotate(6) scale(1.0)"/>
-  <rect x="-100" y="408" width="200" height="11" rx="0" fill="#FFFFFF" transform="translate(742 226) rotate(6) scale(1.0)"/>
-  <path d="M0-62C20-34 44-8 44 18A44 44 0 1 1-44 18C-44-8-20-34 0-62Z" fill="#606060" transform="translate(742 226) rotate(6) scale(1.0) translate(0 278)"/>
-  <path d="M-62 14L-51.7 0L-41.3 14L-31.0 0L-20.7 14L-10.3 0L0.0 14L10.3 0L20.7 14L31.0 0L41.3 14L51.7 0L62.0 14V58C62 98 100 100 100 148V446L88.9 460L77.8 446L66.7 460L55.6 446L44.4 460L33.3 446L22.2 460L11.1 446L0.0 460L-11.1 446L-22.2 460L-33.3 446L-44.4 460L-55.6 446L-66.7 460L-77.8 446L-88.9 460L-100.0 446V148C-100 100-62 98-62 58Z" fill="#FFFFFF" transform="translate(512 160) rotate(0) scale(1.04)"/>
-  <rect x="-62" y="38" width="124" height="11" rx="0" fill="#787878" transform="translate(512 160) rotate(0) scale(1.04)"/>
-  <rect x="-100" y="190" width="200" height="164" rx="0" fill="#787878" transform="translate(512 160) rotate(0) scale(1.04)"/>
-  <rect x="-100" y="408" width="200" height="11" rx="0" fill="#787878" transform="translate(512 160) rotate(0) scale(1.04)"/>
-  <path d="M0-62C20-34 44-8 44 18A44 44 0 1 1-44 18C-44-8-20-34 0-62Z" fill="#FFFFFF" transform="translate(512 160) rotate(0) scale(1.04) translate(0 278)"/>
+  <path d="M-62 14L-51.7 0L-41.3 14L-31.0 0L-20.7 14L-10.3 0L0.0 14L10.3 0L20.7 14L31.0 0L41.3 14L51.7 0L62.0 14V58C62 98 100 100 100 148V446L88.9 460L77.8 446L66.7 460L55.6 446L44.4 460L33.3 446L22.2 460L11.1 446L0.0 460L-11.1 446L-22.2 460L-33.3 446L-44.4 460L-55.6 446L-66.7 460L-77.8 446L-88.9 460L-100.0 446V148C-100 100-62 98-62 58Z" fill="#D6D6D6" transform="translate(198 232) rotate(-3) scale(0.96)"/>
+  <rect x="-62" y="38" width="124" height="11" rx="0" fill="#FFFFFF" transform="translate(198 232) rotate(-3) scale(0.96)"/>
+  <rect x="-100" y="190" width="200" height="164" rx="0" fill="#FFFFFF" transform="translate(198 232) rotate(-3) scale(0.96)"/>
+  <rect x="-100" y="408" width="200" height="11" rx="0" fill="#FFFFFF" transform="translate(198 232) rotate(-3) scale(0.96)"/>
+  <path d="M0-62C20-34 44-8 44 18A44 44 0 1 1-44 18C-44-8-20-34 0-62Z" fill="#707070" transform="translate(198 232) rotate(-3) scale(0.96) translate(0 278)"/>
+  <path d="M-62 14L-51.7 0L-41.3 14L-31.0 0L-20.7 14L-10.3 0L0.0 14L10.3 0L20.7 14L31.0 0L41.3 14L51.7 0L62.0 14V58C62 98 100 100 100 148V446L88.9 460L77.8 446L66.7 460L55.6 446L44.4 460L33.3 446L22.2 460L11.1 446L0.0 460L-11.1 446L-22.2 460L-33.3 446L-44.4 460L-55.6 446L-66.7 460L-77.8 446L-88.9 460L-100.0 446V148C-100 100-62 98-62 58Z" fill="#FFFFFF" transform="translate(512 188) rotate(0) scale(0.96)"/>
+  <rect x="-62" y="38" width="124" height="11" rx="0" fill="#787878" transform="translate(512 188) rotate(0) scale(0.96)"/>
+  <rect x="-100" y="190" width="200" height="164" rx="0" fill="#787878" transform="translate(512 188) rotate(0) scale(0.96)"/>
+  <rect x="-100" y="408" width="200" height="11" rx="0" fill="#787878" transform="translate(512 188) rotate(0) scale(0.96)"/>
+  <path d="M0-62C20-34 44-8 44 18A44 44 0 1 1-44 18C-44-8-20-34 0-62Z" fill="#FFFFFF" transform="translate(512 188) rotate(0) scale(0.96) translate(0 278)"/>
+  <path d="M-62 14L-51.7 0L-41.3 14L-31.0 0L-20.7 14L-10.3 0L0.0 14L10.3 0L20.7 14L31.0 0L41.3 14L51.7 0L62.0 14V58C62 98 100 100 100 148V446L88.9 460L77.8 446L66.7 460L55.6 446L44.4 460L33.3 446L22.2 460L11.1 446L0.0 460L-11.1 446L-22.2 460L-33.3 446L-44.4 460L-55.6 446L-66.7 460L-77.8 446L-88.9 460L-100.0 446V148C-100 100-62 98-62 58Z" fill="#BEBEBE" transform="translate(826 232) rotate(3) scale(0.96)"/>
+  <rect x="-62" y="38" width="124" height="11" rx="0" fill="#FFFFFF" transform="translate(826 232) rotate(3) scale(0.96)"/>
+  <rect x="-100" y="190" width="200" height="164" rx="0" fill="#FFFFFF" transform="translate(826 232) rotate(3) scale(0.96)"/>
+  <rect x="-100" y="408" width="200" height="11" rx="0" fill="#FFFFFF" transform="translate(826 232) rotate(3) scale(0.96)"/>
+  <path d="M0-62C20-34 44-8 44 18A44 44 0 1 1-44 18C-44-8-20-34 0-62Z" fill="#606060" transform="translate(826 232) rotate(3) scale(0.96) translate(0 278)"/>
 </svg>

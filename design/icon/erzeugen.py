@@ -76,15 +76,20 @@ def musette():
 
 
 def trikot():
-    """C: Rückentaschen eines Trikots, drei Gels stecken bereit."""
-    gele = svg(*gel(282, 226, 1.0, -6, "#FFC21F", "#FFFFFF", "#D98E00"),
-               *gel(742, 226, 1.0, 6, "#22C3AA", "#FFFFFF", "#12907D"),
-               *gel(512, 160, 1.04, 0, "#F7F8FA", "#FF6A13", "#FFFFFF"))
-    taschen = svg(path("M-20 524Q172 576 342 540Q512 594 682 540Q852 576 1044 524V1044H-20Z", "#FF6A13"))
-    naehte = svg(rect(332, 570, 20, 454, 10, "#C94A00"), rect(672, 570, 20, 454, 10, "#C94A00"),
-                 rect(-20, 862, 1064, 34, 0, "#FFD7BC"))
-    grau = {"#FFC21F": "#C4C4C4", "#D98E00": "#5A5A5A", "#22C3AA": "#A4A4A4", "#12907D": "#606060",
-            "#F7F8FA": "#FFFFFF", "#FF6A13": "#787878", "#C94A00": "#4A4A4A", "#FFD7BC": "#E0E0E0"}
+    """C v2: drei Rückentaschen eines Trikots, in jeder steckt ein Gel."""
+    mitten = (198, 512, 826)  # Taschen 52–344, 366–658, 680–972; die Gels sitzen genau mittig
+    gele = svg(*gel(mitten[0], 232, 0.96, -3, "#FFC21F", "#FFFFFF", "#D98E00"),
+               *gel(mitten[1], 188, 0.96, 0, "#F7F8FA", "#FF6A13", "#FFFFFF"),
+               *gel(mitten[2], 232, 0.96, 3, "#22C3AA", "#FFFFFF", "#12907D"))
+    # Taschenöffnungen: je Tasche ein eigener Bogen, die Ecken liegen auf den Nähten.
+    boegen = "Q198 612 355 532Q512 612 669 532Q826 612 983 532"
+    taschen = svg(path(f"M-20 520L41 532{boegen}L1044 520V1044H-20Z", "#FF6A13"))
+    saum = path(f"M41 532{boegen}V560Q826 640 669 560Q512 640 355 560Q198 640 41 560Z", "#FF9550")
+    naehte = svg(saum, *[rect(x - 11, 540, 22, 484, 11, "#B84200") for x in (41, 355, 669, 983)],
+                 rect(-20, 866, 1064, 34, 0, "#FFD7BC"))
+    grau = {"#FFC21F": "#D6D6D6", "#D98E00": "#707070", "#22C3AA": "#BEBEBE", "#12907D": "#606060",
+            "#F7F8FA": "#FFFFFF", "#FF6A13": "#787878", "#FF9550": "#B4B4B4", "#B84200": "#3A3A3A",
+            "#FFD7BC": "#E0E0E0"}
     return ([("naehte", naehte), ("taschen", taschen), ("gele", gele)], ("#2C3A5E", "#121A30"),
             ("#171D2E", "#05070E"), grau)
 

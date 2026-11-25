@@ -6,7 +6,7 @@ let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
 let designs = [
     ("a-beutel", "A  Beutel mit Gels"),
     ("b-musette", "B  Musette"),
-    ("c-trikottasche", "C  Trikottasche"),
+    ("c-trikottasche", "C  Trikottasche v2"),
     ("d-einzelgel", "D  Einzelnes Gel"),
 ]
 
