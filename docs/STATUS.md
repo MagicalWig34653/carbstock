@@ -32,14 +32,14 @@ Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderu
 | M9a Externe Aktivitäten (Core) | `ExternalActivity`, idempotenter Import, Duplikatregel (≤ 5 min, ≥ 80 %, Sportart; „Vielleicht doppelt“), Nutzerentscheidungen, Zählung einmal, Vorschlag „erledigt“ | 26 Core-Tests (AC-X1…X5), Core gesamt 118 |
 | M9c Apple Health (Lesen) | Tab Training → „Fahrten aus Apple Health“: einlesen (nur Radfahrten, 90 Tage, Beginn und Dauer), Duplikate zusammengefasst, Vorschlag „Session als erledigt markieren“ (bucht nichts), Ausblenden, Löschen. Store „Imports“ lokal, vom Geräte-Backup ausgenommen, nicht im Export; „Alle Daten löschen“ räumt ihn. HealthKit-Entitlement + Nutzungstext gesetzt. Quelle hinter Protokoll (`WorkoutSource`), Tests mit Attrappe | 10 App-Tests `ActivityServiceTests`, Schema-Test Imports; App gesamt 117 grün |
 | **Gate G1 Schema-Review (25.11.)** | **Erledigt:** alle 12 `@Model`-Typen erfüllen die CloudKit-Regeln, kein Verstoß, keine Modelländerung. Neuer Test im Core-Paket (`ModelSourceRulesTests`, läuft ohne Simulator und in der CI), App-Test prüft zusätzlich Vorgabewerte am echten Schema. Fund behoben: Sicherung behält jetzt Bezugsquelle, Buchungsnotiz, Session-Titel/-Notiz/-Startzeit (Version bleibt 1, alte Sicherungen lesbar) | `docs/G1-SCHEMA-REVIEW.md` |
-| CloudKit-Schema-Werkzeug (25.11.) | DEBUG-Werkzeug „Schema anlegen“ (Schema `CarbStockSchema`), im Release-Build nicht enthalten; Prüfskript `scripts/pruefe-cloudkit-schema.py` (nur lesend). **Noch nicht echt ausgeführt:** der Simulator hat kein iCloud-Konto (CKAccountStatus 3, Trockenlauf läuft in den Timeout) | `CloudKitSchemaToolTests`, `CloudKitSchemaUITests` (hell, dunkel) |
+| CloudKit-Schema-Werkzeug (25.11.) | DEBUG-Werkzeug „Schema anlegen“ (Schema `CarbStockSchema`), im Release-Build nicht enthalten; Prüfskript `scripts/pruefe-cloudkit-schema.py` (nur lesend). Der Werkzeug-Weg lief nie echt (kein iCloud-Konto im Simulator); das Development-Schema wurde stattdessen per `cktool` aus `cloudkit/schema.ckdb` importiert und per Export belegt | `CloudKitSchemaFileTests`, `CloudKitSchemaToolTests`, `CloudKitSchemaUITests` (hell, dunkel) |
 
 Bekannte Verhaltensdetails: ±-Schnellbuchung bucht nicht, wenn nur abgelaufener Bestand da ist (Meldung in der Liste); Abgang über mehrere Chargen meldet `insufficientStock` statt negativ zu buchen. Negativer Bestand entsteht damit nur noch durch Sync-Überschneidung (TV-8) und wird als Konflikt angezeigt.
 Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meldung → Tab „Zuerst“ ohne UI-Test.
 
 ## Zum Build 0.1.0 (1): was nur Lino tun kann
 - **Internen Tester anlegen** (App Store Connect → TestFlight → interne Gruppe, Lino als Tester): Schreibaktion im Konto, daher nicht durch Agenten.
-- **CloudKit-Schema nach Production promoten** (CloudKit-Konsole, Container `iCloud.de.linolaske.carbstock`). Schema-Review G1 ist erledigt; vorher das Development-Schema anlegen (siehe „CloudKit-Schema anlegen“). TestFlight-Builds nutzen Production; ohne Promotion läuft die App lokal, synchronisiert aber nicht.
+- **CloudKit-Schema nach Production promoten** (CloudKit-Konsole, Container `iCloud.de.linolaske.carbstock`). Schema-Review G1 ist erledigt, das Development-Schema ist angelegt (siehe „CloudKit-Schema“). TestFlight-Builds nutzen Production; ohne Promotion läuft die App lokal, synchronisiert aber nicht.
 - Build-Nummer vor jedem weiteren Upload erhöhen (`CURRENT_PROJECT_VERSION` in `project.yml`).
 - Export-Hinweis: Mit Homebrew-rsync im PATH scheitert Xcodes IPA-Export („--extended-attributes unknown option“). Abhilfe: `PATH=/usr/bin:/bin:/usr/sbin:/sbin:… xcodebuild -exportArchive …`.
 
@@ -49,50 +49,20 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 - **Spike S4 (zwei Geräte, echte Health-Daten):** ungeprüft. Die App nimmt nicht an, dass jede Fahrt auf jedem Gerät liegt; der Abgleich läuft zeitbasiert (AC-X3), nicht über die Health-UUID.
 - **Sicht-Prüfung mit Health-Daten** steht aus: Leerzustand von „Fahrten“ im Simulator gesehen (23.11.), aber ohne Fahrten; Listen, Vorschläge und „Vielleicht doppelt“ nur durch Attrappen-Tests belegt.
 
-## CloudKit-Schema anlegen (einmalig, etwa 5 Minuten)
-**Stand 25.11. abends:** Lino fragte „Kannst du das nicht selber?“. Ein Agent kann den Lauf ausführen, sobald **eine** Voraussetzung erfüllt ist:
-- **Kleinster Weg:** im Simulator „CarbStock iPhone“ unter Einstellungen → Apple Account anmelden. Keine Änderung im Developer-Portal, kein echtes Gerät. Danach auf der Board-Karte Bescheid geben.
-- **Alternative iPad** (ohne CarbStock-Daten, Entwicklermodus an): Das Gerät ist noch nicht im Developer-Team registriert (Registrieren belegt dauerhaft einen Geräteplatz, braucht Linos Zustimmung) und muss entsperrt sein.
-- Nicht geeignet: iPhone (CarbStock mit echten Daten installiert), Mac (kein iCloud-Konto).
-
-Agent-Lauf (nur Development), danach das Prüfskript:
-```
-xcodegen generate
-TEST_RUNNER_CARBSTOCK_SCHEMA_RUN=1 xcodebuild test -project CarbStock.xcodeproj -scheme CarbStock \
-  -destination "platform=iOS Simulator,name=CarbStock iPhone" -derivedDataPath build/DerivedData-signed \
-  -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CARBSTOCK_CLOUDKIT=YES \
-  -only-testing:CarbStockUITests/CloudKitSchemaRunUITests
-scripts/pruefe-cloudkit-schema.py
-```
-Ob `initializeCloudKitSchema` im Simulator mit Konto durchläuft, ist noch nicht belegt.
-
-Alternativ macht Lino es selbst:
-Das Werkzeug (nur Debug-Build) ruft `initializeCloudKitSchema` für die fünf Inventory-Typen auf. Es läuft nur mit dem Startargument des Schemas **CarbStockSchema** und erst nach Tipp auf den Knopf, arbeitet auf einem Wegwerf-Speicher und schreibt keine Nutzerdaten.
-
-**Vorher wissen**
-- Am besten ein Gerät **ohne** echte CarbStock-Daten nehmen (z. B. das iPad, die App läuft dort im iPhone-Format). Ein Debug-Build ersetzt eine installierte TestFlight-App und gleicht beim normalen Start mit der Development-Umgebung ab. Liegen schon Daten auf dem Gerät: zuerst Einstellungen → Sicherung exportieren.
-- Das signierte Bauen lässt Xcode die App-ID ergänzen (Capability HealthKit, siehe oben). Mit dem Start gibst du dem zu.
-
-**Schritte**
-1. Im Projektordner `xcodegen generate`, dann `CarbStock.xcodeproj` öffnen.
-2. Oben das Schema **CarbStockSchema** wählen und als Ziel dein Gerät (dort mit deiner Apple-ID bei iCloud angemeldet, entsperrt, online).
-3. Run (⌘R). Die App zeigt nur die Seite „CloudKit-Schema“.
-4. **„Schema anlegen“** tippen und warten (kann ein bis zwei Minuten dauern, App offen lassen).
-   Erwartet: „Schema angelegt“ mit `CD_Batch`, `CD_Product`, `CD_PurchaseEvaluation`, `CD_ShoppingListItem`, `CD_StockMovement`.
-   Bei „requests timed out“: Netz und iCloud-Anmeldung prüfen, erneut tippen. Andere Fehlertexte bitte als Foto auf die Board-Karte.
-5. In Xcode stoppen. War die App nur dafür installiert, wieder löschen.
-6. [CloudKit-Konsole](https://icloud.developer.apple.com/dashboard/) → Container `iCloud.de.linolaske.carbstock` → **Development** → Schema → Record Types. Du musst sehen: `Users` und genau diese fünf, jeweils mit `CD_entityName` und mindestens diesen Feldern (zusätzliche `…_ckAsset`-Felder sind normal):
-   - `CD_Product`: 15 Felder, darunter `CD_flavor`, `CD_hasCaffeine`, `CD_hasLactate`
-   - `CD_Batch`: 13 Felder, darunter `CD_product`, `CD_source`
-   - `CD_StockMovement`: 12 Felder, darunter `CD_batch`, `CD_deviceID`, `CD_note`
-   - `CD_ShoppingListItem`: 11 Felder, darunter `CD_offerJSON`
-   - `CD_PurchaseEvaluation`: 8 Felder, darunter `CD_verdictQuantity`
-   - **Nicht** vorhanden sein dürfen `CD_TrainingSession`, `CD_PackList` oder andere Trainings-/Import-Typen.
-7. Gegenprobe per Skript (braucht den gespeicherten `cktool`-Token, liest nur): `scripts/pruefe-cloudkit-schema.py` → „Schema vollständig.“ Oder auf der Karte Bescheid geben, dann prüft es ein Agent.
-8. Erst dann in der Konsole **„Deploy Schema Changes…“** nach Production (danach nur noch additive Änderungen). Kontrolle: `scripts/pruefe-cloudkit-schema.py --environment production`.
+## CloudKit-Schema (Development angelegt 25.11., Deploy offen)
+- **Stand:** Development enthält die fünf Satztypen `CD_Batch` (18 Felder), `CD_Product` (21), `CD_PurchaseEvaluation` (13), `CD_ShoppingListItem` (16), `CD_StockMovement` (17) plus `Users`. Production enthält nur `Users`.
+- **Wie:** `cloudkit/schema.ckdb` per `cktool` importiert, ohne iCloud-Anmeldung (gespeicherter CloudKit-Management-Token):
+  ```
+  xcrun cktool import-schema --team-id J2DU2P47XW --container-id iCloud.de.linolaske.carbstock \
+    --environment development --validate --file cloudkit/schema.ckdb
+  scripts/pruefe-cloudkit-schema.py            # Development gegen die Datei, nur lesend
+  ```
+- **Herkunft der Felder:** Abbildung Core Data → CloudKit nach Apple („Reading CloudKit Records for Core Data“); `CloudKitSchemaFileTests` hält die Datei feld- und typgenau am SwiftData-Modell. Bei Modelländerungen (nur additiv): Datei ergänzen, Test grün, neu importieren.
+- **Nur Lino:** CloudKit-Konsole → Container → „Deploy Schema Changes…“ nach Production. Danach `scripts/pruefe-cloudkit-schema.py --environment production`.
+- **Vor dem Deploy wissen:** In Production lassen sich Satztypen und Felder nie mehr ändern. Die Typen sind noch nicht durch einen echten Geräte-Abgleich bestätigt. Wer das vorher will: auf einem Gerät mit iCloud einmal das Debug-Werkzeug (Xcode-Schema `CarbStockSchema` → „Schema anlegen“) laufen lassen; meldet es Erfolg und das Prüfskript weiter „stimmt überein“, passen sie. Development lässt sich in der Konsole zurücksetzen, Production nicht.
 
 ## Nächste Schritte (Reihenfolge)
-0. **Lino: CloudKit-Schema anlegen und promoten** (Gate G1 erledigt; Stand 25.11.: Development enthält nur `Users`, deshalb gibt es noch nichts zu deployen). Schritte unten unter „CloudKit-Schema anlegen“.
+0. **Lino: CloudKit-Schema nach Production deployen** (Gate G1 erledigt, Development angelegt 25.11.), siehe „CloudKit-Schema“ oben.
    Offen ohne Schema-Bezug: Einkaufsliste, Einkaufsverlauf und Packlisten fehlen in der Sicherung.
 1. **M7 Rest:** Einstellungen über iCloud-KVS (O-24) bewusst noch nicht gebaut: es gibt keine synchronisierte Einstellung (Farbschwellen, Horizont, Reserve haben keine Oberfläche; Carbs/h und Erinnerungen sind gerätelokal). Baut man den `SettingsStore` jetzt, hat er keinen Nutzer. Wird mit der ersten solchen Einstellung gebaut; Prüfung am Gerät (Spike S1) liegt bei Lino.
 2. **M4b Rest:** Englisch-Frage O-21 vor dem externen TestFlight. (Neutrale Leerzustände: erledigt 24.11., siehe Tabelle.)

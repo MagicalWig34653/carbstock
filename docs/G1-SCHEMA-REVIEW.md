@@ -68,12 +68,9 @@ Der Export (Spec 9.6, AC-S7) verlor beim Wiederherstellen `Batch.source`, `Stock
 - Anlege-/Änderungszeitpunkte von Produkten, Chargen und Sessions, `deviceID`
 - Importierte Apple-Health-Fahrten: bewusst ausgeschlossen
 
-## Vor der Promotion (offen)
-1. **Development-Schema vervollständigen.** Die Promotion überträgt nur, was im Development-Schema des Containers steht (Stand 25.11.: nur `Users`). Beim Anlegen durch normales Speichern entstehen nur Satztypen und Felder, für die schon ein Wert gespeichert wurde; nie belegte optionale Felder (sicher `deviceID`) fehlen dann. Dafür gibt es jetzt das DEBUG-Werkzeug (`CloudKitSchemaTool`, Schema `CarbStockSchema`).
-2. Konsole bzw. `scripts/pruefe-cloudkit-schema.py` prüfen: fünf Satztypen `CD_Product`, `CD_Batch`, `CD_StockMovement`, `CD_ShoppingListItem`, `CD_PurchaseEvaluation` mit allen Feldern oben. Satztypen für Training oder Imports dürfen **nicht** vorkommen.
-3. Erst dann „Deploy Schema Changes“ nach Production.
-
-Die genaue Schrittfolge steht in `docs/STATUS.md` → „CloudKit-Schema anlegen“.
+## Vor der Promotion
+1. **Erledigt (25.11.): Development-Schema vollständig.** `cloudkit/schema.ckdb` wurde per `cktool import-schema --validate` nach Development importiert; der Export danach stimmt in Satztypen, Feldern und Typen überein (`scripts/pruefe-cloudkit-schema.py`). `CloudKitSchemaFileTests` prüft die Datei gegen das SwiftData-Modell. Je Typ zusätzlich `CD_entityName`; Text- und Datenfelder haben ein `…_ckAsset`; UUIDs stehen als Text, To-one-Beziehungen als Text (Datensatzname).
+2. **Offen, nur Maintainer:** „Deploy Schema Changes“ nach Production. Hinweise dazu in `docs/STATUS.md` → „CloudKit-Schema“.
 
 ## Nicht geprüft
-- Kein echter CloudKit-Abgleich und kein Blick in die CloudKit-Konsole (Geräte-Spike S1 offen). Dieses Review belegt die Regeln am Quelltext und am SwiftData-Schema, nicht das Verhalten des Servers.
+- Kein echter CloudKit-Abgleich mit einem Gerät (Spike S1 offen). Belegt sind die Regeln am Quelltext und am SwiftData-Schema sowie das importierte Development-Schema, nicht das Zusammenspiel der Spiegelung damit.

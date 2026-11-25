@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Prüft das CloudKit-Development-Schema gegen die Inventory-Modelle (Gate G1, docs/G1-SCHEMA-REVIEW.md).
+"""Prüft das CloudKit-Schema gegen `cloudkit/schema.ckdb` (Gate G1, docs/G1-SCHEMA-REVIEW.md).
 
-Nur lesend: `xcrun cktool export-schema`, kein Import, kein Deploy. Erwartet werden die fünf Satztypen CD_<Modell> mit je
-einem Feld CD_<Attribut> für jedes gespeicherte Attribut und jede to-one-Beziehung. Zusätzliche Felder (System- und
-Core-Data-Felder wie CD_entityName, ___…) sind in Ordnung; Satztypen für Training oder Imports sind ein Fehler.
+Nur lesend: `xcrun cktool export-schema`, kein Import, kein Deploy. Verglichen werden alle CD_-Satztypen mit jedem Feld
+und Feldtyp (Indizes und Berechtigungen nicht: die sind auch in Production änderbar). Satztypen für Training oder
+Imports sind ein Fehler. Dass die Datei zum SwiftData-Modell passt, prüft `AppTests/CloudKitSchemaFileTests`.
 
 Nutzung:
   scripts/pruefe-cloudkit-schema.py                 # exportiert Development mit dem gespeicherten cktool-Token
   scripts/pruefe-cloudkit-schema.py --environment production
-  scripts/pruefe-cloudkit-schema.py --file schema.ckdb
+  scripts/pruefe-cloudkit-schema.py --file export.ckdb
   scripts/pruefe-cloudkit-schema.py --selftest
-Exit 0 = vollständig, 1 = Abweichung, 2 = Export nicht möglich.
+Exit 0 = stimmt überein, 1 = Abweichung, 2 = Export nicht möglich.
 """
 import argparse
 import re
@@ -21,72 +21,61 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TEAM = "J2DU2P47XW"
 CONTAINER = "iCloud.de.linolaske.carbstock"
-MODEL_FILE = ROOT / "App/Models/InventoryModels.swift"
-LOCAL_ONLY = ["TrainingSession", "WeeklyTemplateRecord", "CarbRateOverride", "PackList", "PackListItem",
-              "ImportedActivity", "ActivityPairDecision"]
-
-
-def expected(source):
-    """{Modell: {Attribute und to-one-Beziehungen}} aus dem Quelltext (Kommentare entfernt)."""
-    text = re.sub(r"//[^\n]*", "", source)
-    models = {}
-    for block in text.split("@Model")[1:]:
-        name = re.search(r"class (\w+)", block).group(1)
-        body = block.split("\n    init(")[0]
-        props = set()
-        for m in re.finditer(r"^    (?:@\w+(?:\([^)]*\))?\s+)*var (\w+): ([^=\n{]+)", body, re.M):
-            prop, typ = m.group(1), m.group(2).strip()
-            if re.match(r"^\[.*\]\??$", typ) and typ.strip("[]?") in {"Batch", "StockMovement", "Product"}:
-                continue  # to-many: liegt im Gegenstück
-            props.add(prop)
-        models[name] = props
-    return models
+REFERENCE = ROOT / "cloudkit/schema.ckdb"
+EXPECTED_TYPES = ["CD_Batch", "CD_Product", "CD_PurchaseEvaluation", "CD_ShoppingListItem", "CD_StockMovement"]
 
 
 def parse(schema_text):
-    """{Satztyp: {Feld}} aus der .ckdb-Ausgabe von cktool."""
+    """{Satztyp: {Feld: Typ}} aus einer .ckdb; Systemfelder ("___…") und GRANT-Zeilen werden übergangen."""
     out, current = {}, None
     for line in schema_text.splitlines():
         m = re.match(r"\s*RECORD TYPE (\w+) \(", line)
         if m:
-            current = out.setdefault(m.group(1), set())
+            current = out.setdefault(m.group(1), {})
             continue
-        m = re.match(r'\s*"?(\w+)"?\s+[A-Z][A-Z0-9_<>]*(?: QUERYABLE| SORTABLE| SEARCHABLE)*,?\s*$', line)
-        if m and current is not None:
-            current.add(m.group(1))
+        if re.match(r"\s*\);", line):
+            current = None
+        m = re.match(r'\s*"?(\w+)"?\s+([A-Z][A-Z0-9_<>]*)(?: QUERYABLE| SORTABLE| SEARCHABLE)*,?\s*$', line)
+        if m and current is not None and not m.group(1).startswith("___"):
+            current[m.group(1)] = m.group(2)
     return out
 
 
-def check(schema_text, source):
-    want, have = expected(source), parse(schema_text)
+def check(schema_text, reference_text):
+    want = {k: v for k, v in parse(reference_text).items() if k.startswith("CD_")}
+    have = {k: v for k, v in parse(schema_text).items() if k.startswith("CD_")}
     problems = []
-    for model, props in sorted(want.items()):
-        rt = "CD_" + model
-        if rt not in have:
-            problems.append(f"Satztyp {rt} fehlt")
-            continue
-        for p in sorted(props):
-            if "CD_" + p not in have[rt]:
-                problems.append(f"{rt}: Feld CD_{p} fehlt")
-    for model in LOCAL_ONLY:
-        if "CD_" + model in have:
-            problems.append(f"Satztyp CD_{model} darf nicht in CloudKit stehen (lokal)")
-    return problems, {k: len(v) for k, v in have.items() if k.startswith("CD_")}
+    for rt in sorted(want.keys() - have.keys()):
+        problems.append(f"Satztyp {rt} fehlt")
+    for rt in sorted(have.keys() - want.keys()):
+        problems.append(f"Satztyp {rt} ist unerwartet (nur Inventory gehört in CloudKit)")
+    for rt in sorted(want.keys() & have.keys()):
+        for field, typ in sorted(want[rt].items()):
+            if field not in have[rt]:
+                problems.append(f"{rt}: Feld {field} fehlt")
+            elif have[rt][field] != typ:
+                problems.append(f"{rt}: Feld {field} hat Typ {have[rt][field]} statt {typ}")
+        for field in sorted(have[rt].keys() - want[rt].keys()):
+            problems.append(f"{rt}: Feld {field} ist unerwartet")
+    return problems, {k: len(v) for k, v in sorted(have.items())}
 
 
 def selftest():
-    src = MODEL_FILE.read_text()
-    want = expected(src)
-    assert sorted(want) == ["Batch", "Product", "PurchaseEvaluation", "ShoppingListItem", "StockMovement"], sorted(want)
-    assert "deviceID" in want["StockMovement"] and "batch" in want["StockMovement"] and "batches" not in want["Product"]
-    full = "DEFINE SCHEMA\n" + "".join(
-        f"\n    RECORD TYPE CD_{m} (\n" + "".join(f"        CD_{p} STRING,\n" for p in sorted(ps)) + "        GRANT WRITE TO \"_creator\"\n    );\n"
-        for m, ps in want.items())
-    assert check(full, src)[0] == [], check(full, src)[0]
-    missing = full.replace("        CD_deviceID STRING,\n", "")
-    assert check(missing, src)[0] == ["CD_StockMovement: Feld CD_deviceID fehlt"], check(missing, src)[0]
-    assert "Satztyp CD_Product fehlt" in check("DEFINE SCHEMA\n", src)[0]
-    assert any("CD_PackList" in p for p in check(full + "\n    RECORD TYPE CD_PackList (\n        CD_title STRING,\n    );\n", src)[0])
+    ref = REFERENCE.read_text()
+    assert sorted(k for k in parse(ref) if k.startswith("CD_")) == EXPECTED_TYPES
+    assert check(ref, ref)[0] == [], check(ref, ref)[0]
+
+    def edit(pattern, replacement):
+        changed, n = re.subn(pattern, replacement, ref, count=1)
+        assert n == 1, pattern
+        return check(changed, ref)[0]
+
+    assert edit(r"\n +CD_deviceID +STRING[^\n]*", "") == ["CD_StockMovement: Feld CD_deviceID fehlt"]
+    assert edit(r"(CD_delta +)INT64", r"\1DOUBLE") == ["CD_StockMovement: Feld CD_delta hat Typ DOUBLE statt INT64"]
+    assert edit(r"(\n +)(CD_delta )", r"\1CD_extra STRING,\1\2") == ["CD_StockMovement: Feld CD_extra ist unerwartet"]
+    assert "Satztyp CD_Product fehlt" in check("DEFINE SCHEMA\n", ref)[0]
+    extra = ref + "\n    RECORD TYPE CD_PackList (\n        CD_title STRING,\n    );\n"
+    assert any("CD_PackList" in p for p in check(extra, ref)[0])
     print("selftest ok")
 
 
@@ -107,11 +96,11 @@ def main():
             print("Export nicht möglich:", r.stderr.strip() or r.stdout.strip(), file=sys.stderr)
             sys.exit(2)
         text = r.stdout
-    problems, found = check(text, MODEL_FILE.read_text())
-    print(f"Umgebung: {a.file or a.environment}; CD_-Satztypen: {found or 'keine'}")
+    problems, found = check(text, REFERENCE.read_text())
+    print(f"Umgebung: {a.file or a.environment}; CD_-Satztypen (Felder): {found or 'keine'}")
     for p in problems:
-        print("FEHLT:", p)
-    print("Schema vollständig." if not problems else f"{len(problems)} Abweichung(en).")
+        print("ABWEICHUNG:", p)
+    print("Schema stimmt überein." if not problems else f"{len(problems)} Abweichung(en).")
     sys.exit(1 if problems else 0)
 
 
