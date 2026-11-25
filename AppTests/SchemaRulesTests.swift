@@ -19,10 +19,27 @@ import Testing
         }
     }
 
-    // Schema.Attribute does not expose default values, so a "has a default" check is not possible
-    // by introspection. What CloudKit needs is "optional or default": checked here as far as visible
-    // (relationships must be optional with an inverse and no .deny); defaults are exercised by
-    // StoresTests, which saves models created through their initialisers.
+    /// G1: every stored attribute is optional or carries a default value (CloudKit needs one of the two), and none is
+    /// transformable or composite (those do not map to CloudKit fields). `Schema.Attribute.defaultValue` is public.
+    @Test func everyAttributeIsOptionalOrHasDefaultAndIsPlain() {
+        for entity in Self.all.entities {
+            for attribute in entity.attributes {
+                #expect(attribute.isOptional || attribute.defaultValue != nil, "\(entity.name).\(attribute.name) weder optional noch mit Vorgabewert")
+                #expect(!attribute.isTransformable, "\(entity.name).\(attribute.name) ist transformable")
+                #expect(!(attribute is Schema.CompositeAttribute), "\(entity.name).\(attribute.name) ist zusammengesetzt")
+            }
+        }
+    }
+
+    /// G1: SwiftData has no ordered relationships (the only relationship option is `.unique`); none may use it.
+    @Test func relationshipsHaveNoOptions() {
+        for entity in Self.all.entities {
+            for relationship in entity.relationships {
+                #expect(relationship.options.isEmpty, "\(entity.name).\(relationship.name) hat Optionen \(relationship.options)")
+            }
+        }
+    }
+
     @Test func relationshipsAreOptionalWithInverseAndNotDeny() {
         for entity in Self.all.entities {
             for relationship in entity.relationships {
