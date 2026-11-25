@@ -3,8 +3,8 @@ import Foundation
 /// Source-level check of the SwiftData `@Model` files against the CloudKit rules (spec 9.2, Gate G1).
 ///
 /// It reads Swift source text, not the runtime schema, so it runs inside `swift test` without a simulator.
-/// What it enforces per stored property of every `@Model` class:
-///  - `var`, never `let`; no reserved or underscore-prefixed names
+/// What it enforces per stored property of every `@Model` class (`static` and `@Transient` are not stored):
+///  - `var`, never `let`; explicit type annotation; no reserved or underscore-prefixed names
 ///  - attributes: only String, Int, Double, Bool, Date, UUID, Data (optional or not); no arrays, no enums,
 ///    no Codable structs (they would become transformable/composite attributes); no `.unique`, `.transformable`
 ///  - non-optional attributes carry a default value (`= …`)
@@ -43,6 +43,7 @@ enum ModelSourceChecker {
                 for a in p.attributes where a.contains(".unique") || a.contains(".transformable") || a.contains(".ordered") {
                     out.append("\(id): Attribut \(a) nicht CloudKit-tauglich")
                 }
+                if p.type.isEmpty { out.append("\(id): ohne Typangabe, nicht prüfbar"); continue }
                 let isOptional = p.type.hasSuffix("?")
                 var base = isOptional ? String(p.type.dropLast()) : p.type
                 let isArray = base.hasPrefix("[") && base.hasSuffix("]") && !base.contains(":")
@@ -123,24 +124,29 @@ enum ModelSourceChecker {
         return models
     }
 
-    /// Statements at class level: split on newline or `;` outside (), [], <>; a `{` ends the head (computed property, init, func).
+    private static let modifiers: Set<String> = ["private", "fileprivate", "internal", "public", "open", "package", "final",
+                                                 "private(set)", "fileprivate(set)", "internal(set)", "public(set)", "package(set)",
+                                                 "nonisolated", "lazy", "weak", "unowned"]
+
+    /// Statements at class level: split on newline or `;` outside (), []; a `{ … }` block ends the statement.
     private static func parseProperties(_ body: String) -> [Property] {
-        var statements: [(head: String, hasBody: Bool)] = []
-        var cur = "", paren = 0, braces = 0, hasBody = false
+        var statements: [(head: String, block: String?)] = []
+        var cur = "", paren = 0, braces = 0, block: String?
         func flush() {
             let t = cur.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !t.isEmpty { statements.append((t, hasBody)) }
-            cur = ""; hasBody = false
+            if !t.isEmpty { statements.append((t, block)) }
+            cur = ""; block = nil
         }
         for c in body {
             if braces > 0 {
                 if c == "{" { braces += 1 } else if c == "}" { braces -= 1; if braces == 0 { flush() } }
+                if braces > 0 { block?.append(c) }
                 continue
             }
             switch c {
             case "(", "[": paren += 1; cur.append(c)
             case ")", "]": paren -= 1; cur.append(c)
-            case "{": hasBody = true; braces = 1
+            case "{": block = ""; braces = 1
             case "\n", ";": if paren == 0 { flush() } else { cur.append(" ") }
             default: cur.append(c)
             }
@@ -148,7 +154,7 @@ enum ModelSourceChecker {
         flush()
 
         var props: [Property] = [], pendingAttributes: [String] = []
-        for (head, hasBody) in statements {
+        for (head, block) in statements {
             var rest = Substring(head), attributes = pendingAttributes
             pendingAttributes = []
             while rest.hasPrefix("@") {
@@ -161,14 +167,26 @@ enum ModelSourceChecker {
                 attributes.append(String(rest[..<stop]))
                 rest = rest[stop...].drop { $0 == " " }
             }
+            while let word = rest.split(separator: " ").first, modifiers.contains(String(word)) {
+                rest = rest.dropFirst(word.count).drop { $0 == " " }
+            }
             guard rest.hasPrefix("var ") || rest.hasPrefix("let ") else {
                 if rest.isEmpty { pendingAttributes = attributes }
                 continue
             }
-            if hasBody { continue } // computed property
+            if attributes.contains("@Transient") { continue }
+            // A block without `=` is a computed property, unless it only holds observers.
+            if let block, !rest.contains("=") {
+                let start = block.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !start.hasPrefix("didSet") && !start.hasPrefix("willSet") { continue }
+            }
             let isLet = rest.hasPrefix("let ")
             let decl = rest.dropFirst(4).trimmingCharacters(in: .whitespaces)
-            guard let colon = decl.firstIndex(of: ":") else { continue }
+            guard let colon = decl.firstIndex(of: ":"), colon < (decl.firstIndex(of: "=") ?? decl.endIndex) else {
+                let name = String(decl.prefix { $0.isLetter || $0.isNumber || $0 == "_" })
+                props.append(Property(name: name, type: "", hasDefault: true, isLet: isLet, attributes: attributes))
+                continue
+            }
             let name = decl[..<colon].trimmingCharacters(in: .whitespaces)
             let afterColon = decl[decl.index(after: colon)...]
             var depth = 0, eq: String.Index?

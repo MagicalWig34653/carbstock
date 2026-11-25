@@ -48,6 +48,36 @@ import Testing
         #expect(found("@Model final class A { var description: String = \"\" }", "A.description"))
     }
 
+    /// SwiftData also stores these forms; none of them may slip past the checker.
+    @Test func reportsStoredPropertiesWrittenInOtherForms() {
+        #expect(found("@Model final class A { var tags = [String]() }", "A.tags"))
+        #expect(found("@Model final class A { private var name: String }", "A.name"))
+        #expect(found("@Model final class A { public private(set) var name: String }", "A.name"))
+        #expect(found("@Model final class A { var count: Int { didSet { } } }", "A.count"))
+        #expect(found("@Model final class A { var kind: Kind = .a { willSet { } } }", "A.kind"))
+    }
+
+    @Test func ignoresWhatIsNotStored() {
+        let a = """
+        @Model final class A {
+            static var shared: Kind = .a
+            @Transient var cache: [String] = []
+            var computed: [String] { [] }
+        }
+        """
+        #expect(ModelSourceChecker.violations(in: [a]).isEmpty)
+    }
+
+    @Test func noModelOutsideAppModels() throws {
+        let app = Self.appDirectory()
+        let walker = try #require(FileManager.default.enumerator(at: app, includingPropertiesForKeys: nil))
+        var stray: [String] = []
+        for case let file as URL in walker where file.pathExtension == "swift" && file.deletingLastPathComponent().lastPathComponent != "Models" {
+            if ModelSourceChecker.strip(try String(contentsOf: file, encoding: .utf8)).contains("@Model") { stray.append(file.lastPathComponent) }
+        }
+        #expect(stray == [])
+    }
+
     @Test func acceptsACompliantModel() {
         let a = """
         @Model final class A {
@@ -73,10 +103,14 @@ import Testing
         #expect(ModelSourceChecker.violations(in: sources) == [])
     }
 
-    static func modelSources() throws -> [String] {
+    static func appDirectory() -> URL {
         var url = URL(fileURLWithPath: #filePath)
         for _ in 0..<5 { url.deleteLastPathComponent() }
-        let dir = url.appendingPathComponent("App/Models")
+        return url.appendingPathComponent("App")
+    }
+
+    static func modelSources() throws -> [String] {
+        let dir = appDirectory().appendingPathComponent("Models")
         let files = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }.sorted { $0.path < $1.path }
         return try files.map { try String(contentsOf: $0, encoding: .utf8) }
