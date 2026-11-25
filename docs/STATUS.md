@@ -49,7 +49,24 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 - **Spike S4 (zwei Geräte, echte Health-Daten):** ungeprüft. Die App nimmt nicht an, dass jede Fahrt auf jedem Gerät liegt; der Abgleich läuft zeitbasiert (AC-X3), nicht über die Health-UUID.
 - **Sicht-Prüfung mit Health-Daten** steht aus: Leerzustand von „Fahrten“ im Simulator gesehen (23.11.), aber ohne Fahrten; Listen, Vorschläge und „Vielleicht doppelt“ nur durch Attrappen-Tests belegt.
 
-## CloudKit-Schema anlegen (nur Lino, einmalig, etwa 5 Minuten)
+## CloudKit-Schema anlegen (einmalig, etwa 5 Minuten)
+**Stand 25.11. abends:** Lino fragte „Kannst du das nicht selber?“. Ein Agent kann den Lauf ausführen, sobald **eine** Voraussetzung erfüllt ist:
+- **Kleinster Weg:** im Simulator „CarbStock iPhone“ unter Einstellungen → Apple Account anmelden. Keine Änderung im Developer-Portal, kein echtes Gerät. Danach auf der Board-Karte Bescheid geben.
+- **Alternative iPad** (ohne CarbStock-Daten, Entwicklermodus an): Das Gerät ist noch nicht im Developer-Team registriert (Registrieren belegt dauerhaft einen Geräteplatz, braucht Linos Zustimmung) und muss entsperrt sein.
+- Nicht geeignet: iPhone (CarbStock mit echten Daten installiert), Mac (kein iCloud-Konto).
+
+Agent-Lauf (nur Development), danach das Prüfskript:
+```
+xcodegen generate
+TEST_RUNNER_CARBSTOCK_SCHEMA_RUN=1 xcodebuild test -project CarbStock.xcodeproj -scheme CarbStock \
+  -destination "platform=iOS Simulator,name=CarbStock iPhone" -derivedDataPath build/DerivedData-signed \
+  -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CARBSTOCK_CLOUDKIT=YES \
+  -only-testing:CarbStockUITests/CloudKitSchemaRunUITests
+scripts/pruefe-cloudkit-schema.py
+```
+Ob `initializeCloudKitSchema` im Simulator mit Konto durchläuft, ist noch nicht belegt.
+
+Alternativ macht Lino es selbst:
 Das Werkzeug (nur Debug-Build) ruft `initializeCloudKitSchema` für die fünf Inventory-Typen auf. Es läuft nur mit dem Startargument des Schemas **CarbStockSchema** und erst nach Tipp auf den Knopf, arbeitet auf einem Wegwerf-Speicher und schreibt keine Nutzerdaten.
 
 **Vorher wissen**
