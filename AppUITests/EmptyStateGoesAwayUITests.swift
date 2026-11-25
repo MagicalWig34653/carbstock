@@ -78,6 +78,45 @@ final class EmptyStateGoesAwayUITests: XCTestCase {
         shot(app, "01-bestand-5-entfernt", dark: dark)
     }
 
+    // MARK: Bestand leer trotz Produkten (alles archiviert, Filter ohne Treffer)
+
+    private func checkHiddenInventory(dark: Bool) throws {
+        let app = launch(dark: dark)
+        XCTAssertTrue(app.staticTexts["Noch kein Vorrat"].waitForExistence(timeout: 10))
+        app.buttons["Produkt anlegen"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Produkt anlegen"].waitForExistence(timeout: 5))
+        try type("UI-Testgel", into: app.textFields["Name (Pflicht)"], app: app)
+        try type("25", into: app.textFields["z. B. 25"], app: app)
+        // Mit Menge entsteht eine Buchung: „Archivieren“ legt das Produkt dann ins Archiv, statt es zu löschen.
+        try type("3", into: app.textFields["optional"].firstMatch, app: app)
+        app.buttons["Sichern"].tap()
+        XCTAssertTrue(app.staticTexts["UI-Testgel"].waitForExistence(timeout: 5))
+        app.staticTexts["UI-Testgel"].tap()
+        let archive = app.buttons["Archivieren"].firstMatch
+        var swipes = 0
+        while !(archive.exists && archive.isHittable) && swipes < 6 { app.swipeUp(); swipes += 1 }
+        archive.tap()
+        let confirm = app.popovers.buttons["Archivieren"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "Bestätigungsdialog erscheint nicht")
+        confirm.tap()
+
+        XCTAssertTrue(app.staticTexts["Alle Produkte archiviert"].waitForExistence(timeout: 5), "Bestand: Grund „archiviert“ fehlt")
+        XCTAssertFalse(app.staticTexts["Noch kein Vorrat"].exists)
+        shot(app, "01-bestand-6-alles-archiviert", dark: dark)
+        app.buttons["Archiv anzeigen"].tap()
+        XCTAssertTrue(app.staticTexts["UI-Testgel"].waitForExistence(timeout: 5), "„Archiv anzeigen“ zeigt das Produkt nicht")
+
+        app.buttons["Filter"].tap()
+        app.buttons["Abgelaufen"].tap()
+        XCTAssertTrue(app.staticTexts["Keine passenden Produkte"].waitForExistence(timeout: 5), "Bestand: Grund „Filter“ fehlt")
+        shot(app, "01-bestand-7-filter-ohne-treffer", dark: dark)
+        app.buttons["Filter zurücksetzen"].tap()
+        XCTAssertTrue(app.staticTexts["Alle Produkte archiviert"].waitForExistence(timeout: 5), "Zurücksetzen führt nicht zurück")
+    }
+
+    func testHiddenInventoryNamesTheReason() throws { try checkHiddenInventory(dark: false) }
+    func testHiddenInventoryNamesTheReasonDark() throws { try checkHiddenInventory(dark: true) }
+
     func testInventoryEmptyStateGoesAway() throws { try checkInventory(dark: false) }
     func testInventoryEmptyStateGoesAwayDark() throws { try checkInventory(dark: true) }
 

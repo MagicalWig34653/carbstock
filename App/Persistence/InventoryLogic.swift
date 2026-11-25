@@ -86,7 +86,21 @@ struct InventoryFilter: Equatable, Sendable {
     var expiringWithinDays = 60
 }
 
+/// Warum die Bestandsliste nichts zeigt (M4b).
+enum InventoryEmptyState: Equatable, Sendable {
+    case noStock, noSearchResults, allArchived, filtered
+}
+
 enum InventoryList {
+    /// `nil`, solange die Liste etwas zeigt.
+    static func emptyState(_ filter: InventoryFilter, in products: [ProductSummary], today: CalendarDay) -> InventoryEmptyState? {
+        if products.isEmpty { return .noStock }
+        guard apply(filter, to: products, today: today).isEmpty else { return nil }
+        if !filter.search.trimmingCharacters(in: .whitespaces).isEmpty { return .noSearchResults }
+        // Ohne Suche und Filter bleibt nur dann nichts übrig, wenn alles archiviert ist.
+        return filter.category == nil && filter.mode == .all ? .allArchived : .filtered
+    }
+
     /// Case- and diacritic-insensitive search over name, brand and flavor (AC-B5), then filters, sorted by name.
     static func apply(_ filter: InventoryFilter, to products: [ProductSummary], today: CalendarDay) -> [ProductSummary] {
         let query = filter.search.trimmingCharacters(in: .whitespaces)

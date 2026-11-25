@@ -48,6 +48,27 @@ import Testing
         #expect(sorted.map(\.displayName) == ["Gel", "Gel · Cola", "Gel · Zitrone"])
     }
 
+    // M4b: Ist die Liste leer, obwohl es Produkte gibt, nennt die App den richtigen Grund.
+    @Test func emptyListNamesTheRightReason() {
+        let gel = row("Gel", expiries: [today.adding(days: 100)])
+        let old = row("Alt", archived: true)
+        func state(_ f: InventoryFilter, _ p: [ProductSummary]) -> InventoryEmptyState? {
+            InventoryList.emptyState(f, in: p, today: today)
+        }
+        #expect(state(InventoryFilter(), []) == .noStock)
+        #expect(state(InventoryFilter(search: "x"), []) == .noStock)
+        #expect(state(InventoryFilter(), [gel, old]) == nil)
+        #expect(state(InventoryFilter(mode: .archive), [old]) == nil)
+        #expect(state(InventoryFilter(), [old]) == .allArchived)
+        #expect(state(InventoryFilter(search: "  "), [old]) == .allArchived)
+        #expect(state(InventoryFilter(mode: .expired), [gel]) == .filtered)
+        #expect(state(InventoryFilter(category: .bar), [gel]) == .filtered)
+        #expect(state(InventoryFilter(mode: .archive), [gel]) == .filtered)
+        #expect(state(InventoryFilter(category: .bar), [old]) == .filtered)
+        #expect(state(InventoryFilter(search: "xyz"), [gel]) == .noSearchResults)
+        #expect(state(InventoryFilter(search: "xyz", mode: .expired), [gel]) == .noSearchResults)
+    }
+
     @Test func rowNameShowsAdditives() {
         var r = row("Gel", flavor: "Zitrone")
         r.hasCaffeine = true

@@ -22,7 +22,8 @@ struct InventoryListView: View {
         let byID = Dictionary(uniqueKeysWithValues: summaries.map { ($0.1.id, $0.0) })
         NavigationStack {
             Group {
-                if products.isEmpty {
+                switch InventoryList.emptyState(filter, in: summaries.map(\.1), today: today) {
+                case .noStock:
                     ContentUnavailableView {
                         Label("Noch kein Vorrat", systemImage: "shippingbox")
                     } description: {
@@ -30,9 +31,26 @@ struct InventoryListView: View {
                     } actions: {
                         Button("Produkt anlegen") { showingForm = true }.buttonStyle(.borderedProminent).tint(Color.actionFill)
                     }
-                } else if visible.isEmpty {
+                case .noSearchResults:
                     ContentUnavailableView.search(text: filter.search)
-                } else {
+                case .allArchived:
+                    ContentUnavailableView {
+                        Label("Alle Produkte archiviert", systemImage: "archivebox")
+                    } description: {
+                        Text("Archivierte Produkte stehen im Archiv und lassen sich wiederherstellen.")
+                    } actions: {
+                        Button("Archiv anzeigen") { filter.mode = .archive }.buttonStyle(.borderedProminent).tint(Color.actionFill)
+                    }
+                case .filtered:
+                    ContentUnavailableView {
+                        Label("Keine passenden Produkte", systemImage: "line.3.horizontal.decrease.circle")
+                    } description: {
+                        Text("Der gewählte Filter blendet gerade alles aus.")
+                    } actions: {
+                        Button("Filter zurücksetzen") { filter.category = nil; filter.mode = .all }
+                            .buttonStyle(.borderedProminent).tint(Color.actionFill)
+                    }
+                case nil:
                     List(visible) { row in
                         if let product = byID[row.id] {
                             NavigationLink { ProductDetailView(product: product) } label: {
