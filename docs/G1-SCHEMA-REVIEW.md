@@ -69,9 +69,11 @@ Der Export (Spec 9.6, AC-S7) verlor beim Wiederherstellen `Batch.source`, `Stock
 - Importierte Apple-Health-Fahrten: bewusst ausgeschlossen
 
 ## Vor der Promotion (offen)
-1. **Development-Schema vervollständigen.** Die Promotion überträgt nur, was im Development-Schema des Containers steht. Beim automatischen Anlegen durch Schreiben entstehen nur Satztypen und Felder, für die schon ein Wert gespeichert wurde; nie belegte optionale Felder (sicher `deviceID`) fehlen dann. Der saubere Weg ist ein einmaliger Lauf von `initializeCloudKitSchema` in einem signierten Debug-Build. **Dieses Werkzeug gibt es im Projekt noch nicht.**
-2. In der CloudKit-Konsole (Development) prüfen: fünf Satztypen `CD_Product`, `CD_Batch`, `CD_StockMovement`, `CD_ShoppingListItem`, `CD_PurchaseEvaluation` mit allen Feldern oben (Präfix `CD_`; zusätzliche `…_ckAsset`-Felder bei Text- und Datenfeldern sind normal). Satztypen für Training oder Imports dürfen **nicht** vorkommen.
+1. **Development-Schema vervollständigen.** Die Promotion überträgt nur, was im Development-Schema des Containers steht (Stand 25.11.: nur `Users`). Beim Anlegen durch normales Speichern entstehen nur Satztypen und Felder, für die schon ein Wert gespeichert wurde; nie belegte optionale Felder (sicher `deviceID`) fehlen dann. Dafür gibt es jetzt das DEBUG-Werkzeug (`CloudKitSchemaTool`, Schema `CarbStockSchema`).
+2. Konsole bzw. `scripts/pruefe-cloudkit-schema.py` prüfen: fünf Satztypen `CD_Product`, `CD_Batch`, `CD_StockMovement`, `CD_ShoppingListItem`, `CD_PurchaseEvaluation` mit allen Feldern oben. Satztypen für Training oder Imports dürfen **nicht** vorkommen.
 3. Erst dann „Deploy Schema Changes“ nach Production.
+
+Die genaue Schrittfolge steht in `docs/STATUS.md` → „CloudKit-Schema anlegen“.
 
 ## Nicht geprüft
 - Kein echter CloudKit-Abgleich und kein Blick in die CloudKit-Konsole (Geräte-Spike S1 offen). Dieses Review belegt die Regeln am Quelltext und am SwiftData-Schema, nicht das Verhalten des Servers.
