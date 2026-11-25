@@ -87,3 +87,13 @@ schemes:
         - CarbStockUITests
       commandLineArguments:
         "-CarbStockInMemory": true
+  # DEBUG-Werkzeug (Gate G1): Development-Schema in CloudKit anlegen, siehe docs/G1-SCHEMA-REVIEW.md.
+  # Signiert starten, dann in der App „Schema anlegen“ tippen. Läuft nie ohne dieses Startargument.
+  CarbStockSchema:
+    build:
+      targets:
+        CarbStock: all
+    run:
+      config: Debug
+      commandLineArguments:
+        "-CarbStockCloudKitSchema": true
