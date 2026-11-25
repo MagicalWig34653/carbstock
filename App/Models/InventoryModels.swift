@@ -100,7 +100,7 @@ final class Batch {
         return BatchInfo(id: id, productID: product.id, purchaseDate: purchase, quantityPurchased: quantityPurchased,
                          totalPriceCents: totalPriceCents, currency: currency,
                          expiryDate: expiryDay.flatMap(CalendarDay.init(isoString:)),
-                         useDespiteExpiry: useDespiteExpiry, isArchived: isArchived)
+                         useDespiteExpiry: useDespiteExpiry, isArchived: isArchived, source: source)
     }
 }
 
@@ -140,7 +140,7 @@ final class StockMovement {
         guard let batch, let type = MovementType(rawValue: typeRaw) else { return nil }
         return Movement(id: id, batchID: batch.id, type: type, delta: delta, occurredAt: occurredAt,
                         createdAt: createdAt, idempotencyKey: idempotencyKey,
-                        reversesMovementID: reversesMovementID, referenceID: referenceID)
+                        reversesMovementID: reversesMovementID, referenceID: referenceID, note: note)
     }
 }
 

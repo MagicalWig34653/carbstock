@@ -73,7 +73,7 @@ final class BackupService {
         for b in doc.batches where batches[b.id] == nil {
             guard let product = products[b.productID] else { continue }
             let model = Batch(id: b.id, product: product, purchaseDay: b.purchaseDate, quantityPurchased: b.quantityPurchased,
-                              totalPriceCents: b.totalPriceCents, expiryDay: b.expiryDate)
+                              totalPriceCents: b.totalPriceCents, expiryDay: b.expiryDate, source: b.source)
             model.currency = b.currency
             model.useDespiteExpiry = b.useDespiteExpiry
             model.isArchived = b.isArchived
@@ -85,7 +85,7 @@ final class BackupService {
             guard let batch = batches[m.batchID] else { continue }
             let model = StockMovement(id: m.id, batch: batch, type: m.type, delta: m.delta, occurredAt: m.occurredAt,
                                       idempotencyKey: m.idempotencyKey, reversesMovementID: m.reversesMovementID,
-                                      referenceID: m.referenceID)
+                                      referenceID: m.referenceID, note: m.note)
             model.createdAt = m.createdAt
             context.insert(model)
         }
@@ -95,6 +95,9 @@ final class BackupService {
             model.id = s.id
             model.statusRaw = s.status.rawValue
             model.sourceRaw = "import"
+            model.title = s.title
+            model.note = s.note
+            model.startTime = s.startTime
             context.insert(model)
         }
         for t in plan.template {

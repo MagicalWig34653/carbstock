@@ -99,10 +99,12 @@ public struct BatchInfo: Hashable, Sendable, Codable, Identifiable {
     /// User chose "use anyway" for an expired batch (4.2): counts for the forecast again.
     public var useDespiteExpiry: Bool
     public var isArchived: Bool
+    /// Bezugsquelle (Shop, Aktion). Optional: fehlt in älteren Sicherungen.
+    public var source: String?
 
     public init(id: UUID = UUID(), productID: UUID, purchaseDate: CalendarDay, quantityPurchased: Int,
                 totalPriceCents: Int? = nil, currency: String = "EUR", expiryDate: CalendarDay? = nil,
-                useDespiteExpiry: Bool = false, isArchived: Bool = false) {
+                useDespiteExpiry: Bool = false, isArchived: Bool = false, source: String? = nil) {
         self.id = id
         self.productID = productID
         self.purchaseDate = purchaseDate
@@ -112,6 +114,7 @@ public struct BatchInfo: Hashable, Sendable, Codable, Identifiable {
         self.expiryDate = expiryDate
         self.useDespiteExpiry = useDespiteExpiry
         self.isArchived = isArchived
+        self.source = source
     }
 }
 
@@ -127,10 +130,12 @@ public struct Movement: Hashable, Sendable, Codable, Identifiable {
     public var idempotencyKey: String?
     public var reversesMovementID: UUID?
     public var referenceID: UUID?
+    /// Freitext zur Buchung (z. B. „Inventur“). Optional: fehlt in älteren Sicherungen.
+    public var note: String?
 
     public init(id: UUID = UUID(), batchID: UUID, type: MovementType, delta: Int, occurredAt: Date,
                 createdAt: Date? = nil, idempotencyKey: String? = nil, reversesMovementID: UUID? = nil,
-                referenceID: UUID? = nil) {
+                referenceID: UUID? = nil, note: String? = nil) {
         self.id = id
         self.batchID = batchID
         self.type = type
@@ -140,6 +145,7 @@ public struct Movement: Hashable, Sendable, Codable, Identifiable {
         self.idempotencyKey = idempotencyKey
         self.reversesMovementID = reversesMovementID
         self.referenceID = referenceID
+        self.note = note
     }
 }
 
@@ -154,15 +160,23 @@ public struct PlannedSession: Hashable, Sendable, Codable, Identifiable {
     public var durationMinutes: Int
     public var carbsPerHourOverride: Int?
     public var status: SessionStatus
+    /// Eigene Angaben ohne Einfluss auf den Bedarf; optional, fehlen in älteren Sicherungen.
+    public var title: String?
+    public var note: String?
+    public var startTime: Date?
 
     public init(id: UUID = UUID(), day: CalendarDay, type: SessionType, durationMinutes: Int,
-                carbsPerHourOverride: Int? = nil, status: SessionStatus = .planned) {
+                carbsPerHourOverride: Int? = nil, status: SessionStatus = .planned,
+                title: String? = nil, note: String? = nil, startTime: Date? = nil) {
         self.id = id
         self.day = day
         self.type = type
         self.durationMinutes = durationMinutes
         self.carbsPerHourOverride = carbsPerHourOverride
         self.status = status
+        self.title = title
+        self.note = note
+        self.startTime = startTime
     }
 }
 

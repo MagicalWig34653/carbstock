@@ -172,6 +172,36 @@ import Testing
         #expect(try ctx3.fetch(FetchDescriptor<Product>()).allSatisfy { !$0.hasCaffeine && !$0.hasLactate })
     }
 
+    // G1 / AC-S7: auch Bezugsquelle, Buchungsnotiz und Titel/Notiz/Startzeit der Session überleben die Sicherung
+    @Test func freeTextFieldsSurviveExportImport() throws {
+        let (ctx, inv, training, backup) = make()
+        let p = try product(inv, "Gel")
+        let batch = try #require(p.batches?.first)
+        batch.source = "Black Friday"
+        try inv.adjust(by: -1, on: batch, note: "Inventur")
+        _ = try training.addSession(SessionDraft(day: day))
+        let session = try #require(training.sessions().first)
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        session.title = "Lange Runde"; session.note = "Flaschen vorbereiten"; session.startTime = start
+        try ctx.save()
+        let data = try backup.exportData()
+
+        let (ctx2, _, training2, backup2) = make()
+        try backup2.importBackup(data)
+        #expect(try ctx2.fetch(FetchDescriptor<Batch>()).first?.source == "Black Friday")
+        #expect(try ctx2.fetch(FetchDescriptor<StockMovement>()).compactMap(\.note) == ["Inventur"])
+        let restored = try #require(training2.sessions().first)
+        #expect(restored.title == "Lange Runde" && restored.note == "Flaschen vorbereiten" && restored.startTime == start)
+
+        // Ältere Sicherung ohne diese Felder: importiert wie bisher, die Felder bleiben leer
+        var text = String(decoding: data, as: UTF8.self)
+        for key in ["source", "note", "title", "startTime"] { text = text.replacingOccurrences(of: "\"\(key)\"", with: "\"x_\(key)\"") }
+        let (ctx3, _, training3, backup3) = make()
+        try backup3.importBackup(Data(text.utf8))
+        #expect(try ctx3.fetch(FetchDescriptor<Batch>()).first?.source == nil)
+        #expect(training3.sessions().first?.title == nil)
+    }
+
     @Test func twoFlavorsOfOneProductAreNoDuplicates() throws {
         let (_, inv, _, backup) = make()
         for f in ["Zitrone", "Cola"] {

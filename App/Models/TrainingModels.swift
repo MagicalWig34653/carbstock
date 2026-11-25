@@ -38,7 +38,8 @@ final class TrainingSession {
         guard let day = CalendarDay(isoString: day), let type = SessionType(rawValue: typeRaw) else { return nil }
         return PlannedSession(id: id, day: day, type: type, durationMinutes: durationMinutes,
                               carbsPerHourOverride: carbsPerHourOverride,
-                              status: SessionStatus(rawValue: statusRaw) ?? .planned)
+                              status: SessionStatus(rawValue: statusRaw) ?? .planned,
+                              title: title, note: note, startTime: startTime)
     }
 }
 
