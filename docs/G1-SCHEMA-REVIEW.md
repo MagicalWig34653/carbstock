@@ -1,12 +1,13 @@
 # Gate G1: Schema-Review vor der CloudKit-Production-Promotion
 
 **Stand:** 25.11.2026. Grundlage: Spec 9.2, `App/Models/*.swift`, `App/Persistence/Stores.swift`.
-**Es wurde nichts promotet, nichts hochgeladen und nichts an CloudKit geändert.**
+**Für die Prüfung selbst wurde nichts promotet, nichts hochgeladen und nichts an CloudKit geändert.**
+**Nachtrag 25.11.:** Das Schema ist inzwischen in Production (siehe „Vor der Promotion“).
 
 ## Ergebnis
 - **Alle 12 `@Model`-Typen erfüllen die CloudKit-Regeln. Kein Verstoß, keine Änderung an den Modellen nötig.**
 - Ein Fund in der Sicherung (Export verlor Freitextfelder) ist behoben, ohne Schema-Eingriff.
-- Das Schema ist aus Sicht des Quelltexts **bereit zum Einfrieren**. Vor der Promotion fehlt noch ein Schritt: Das Development-Schema in CloudKit muss vollständig sein (siehe „Vor der Promotion“).
+- Das Schema war aus Sicht des Quelltexts **bereit zum Einfrieren** und ist seit dem 25.11. in Production.
 
 ## Geprüfte Regeln
 | Nr. | Regel | Prüfung im Core-Paket (`swift test`) | Prüfung am echten Schema (App-Target) |
@@ -68,9 +69,9 @@ Der Export (Spec 9.6, AC-S7) verlor beim Wiederherstellen `Batch.source`, `Stock
 - Anlege-/Änderungszeitpunkte von Produkten, Chargen und Sessions, `deviceID`
 - Importierte Apple-Health-Fahrten: bewusst ausgeschlossen
 
-## Vor der Promotion
+## Vor der Promotion (abgeschlossen)
 1. **Erledigt (25.11.): Development-Schema vollständig.** `cloudkit/schema.ckdb` wurde per `cktool import-schema --validate` nach Development importiert; der Export danach stimmt in Satztypen, Feldern und Typen überein (`scripts/pruefe-cloudkit-schema.py`). `CloudKitSchemaFileTests` prüft die Datei gegen das SwiftData-Modell. Je Typ zusätzlich `CD_entityName`; Text- und Datenfelder haben ein `…_ckAsset`; UUIDs stehen als Text, To-one-Beziehungen als Text (Datensatzname).
-2. **Offen, nur Maintainer:** „Deploy Schema Changes“ nach Production. Hinweise dazu in `docs/STATUS.md` → „CloudKit-Schema“.
+2. **Erledigt (25.11.): „Deploy Schema Changes“ nach Production** durch den Maintainer. `scripts/pruefe-cloudkit-schema.py --environment production` meldet „Schema stimmt überein“ (alle fünf Satztypen mit Feldern und Typen).
 
 ## Nicht geprüft
 - Kein echter CloudKit-Abgleich mit einem Gerät (Spike S1 offen). Belegt sind die Regeln am Quelltext und am SwiftData-Schema sowie das importierte Development-Schema, nicht das Zusammenspiel der Spiegelung damit.

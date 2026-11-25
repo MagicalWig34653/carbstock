@@ -8,7 +8,7 @@ Lino hat ausdrücklich erlaubt, die Bundle-ID per Xcode/automatischer Signierung
 (`xcodebuild build -destination 'generic/platform=iOS' -allowProvisioningUpdates`, Team `J2DU2P47XW`) hat das Provisioning-Profil
 „iOS Team Provisioning Profile: de.linolaske.carbstock“ angelegt. Es enthält App-ID `J2DU2P47XW.de.linolaske.carbstock`,
 iCloud-Container `iCloud.de.linolaske.carbstock` (Development + Production), CloudKit, Push (`aps-environment`), KV-Speicher und 2 Geräte.
-**Offen bleibt:** App-Store-Connect-Eintrag (Schritt 2), Prüfung im Portal durch Lino, CloudKit-Schema-Promotion, alles Weitere dieser Datei.
+**Offen bleibt:** App-Store-Connect-Eintrag (Schritt 2), Prüfung im Portal durch Lino, alles Weitere dieser Datei. (CloudKit-Schema seit 25.11. in Production.)
 
 ## Schritt 1 – Developer-Portal (Certificates, Identifiers & Profiles)
 1. **iCloud-Container** anlegen: `iCloud.de.linolaske.carbstock` (Beschreibung z. B. „CarbStock“).
@@ -36,7 +36,7 @@ Alternative: Projekt in Xcode öffnen (`xcodegen generate`, dann `CarbStock.xcod
 - **Datenschutz-URL**: Pflicht vor TestFlight extern / Review; Text entsteht in M8.
 - **Kategorie**: Gesundheit und Fitness (Vorschlag), Sekundär: Essen und Trinken oder Dienstprogramme.
 - **Altersfreigabe, Exportkonformität**: `ITSAppUsesNonExemptEncryption = NO` ist gesetzt.
-- **CloudKit-Schema nach Production promoten** (CloudKit-Konsole) – erst vor dem ersten TestFlight-Build, bewusster Schritt durch Lino (Spec 9.2.5).
+- **Erledigt (25.11.): CloudKit-Schema in Production.** Spätere Änderungen nur additiv, Deploy bleibt beim Maintainer (Spec 9.2.5).
 - **O-18**: öffentlich im App Store oder nur privat/TestFlight – bestimmt Umfang von Impressum, Review und Datenschutzangaben.
 
 ## Was danach freigeschaltet wird

@@ -40,7 +40,7 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 
 ## Zum Build 0.1.0 (1): was nur Lino tun kann
 - **Internen Tester anlegen** (App Store Connect → TestFlight → interne Gruppe, Lino als Tester): Schreibaktion im Konto, daher nicht durch Agenten.
-- **CloudKit-Schema nach Production promoten** (CloudKit-Konsole, Container `iCloud.de.linolaske.carbstock`). Schema-Review G1 ist erledigt, das Development-Schema ist angelegt (siehe „CloudKit-Schema“). TestFlight-Builds nutzen Production; ohne Promotion läuft die App lokal, synchronisiert aber nicht.
+- **Erledigt (25.11.): CloudKit-Schema in Production** (siehe „CloudKit-Schema“). Ob die TestFlight-Version damit synchronisiert, ist noch an keinem Gerät belegt (Spike S1).
 - Build-Nummer vor jedem weiteren Upload erhöhen (`CURRENT_PROJECT_VERSION` in `project.yml`).
 - Export-Hinweis: Mit Homebrew-rsync im PATH scheitert Xcodes IPA-Export („--extended-attributes unknown option“). Abhilfe: `PATH=/usr/bin:/bin:/usr/sbin:/sbin:… xcodebuild -exportArchive …`.
 
@@ -50,20 +50,20 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 - **Spike S4 (zwei Geräte, echte Health-Daten):** ungeprüft. Die App nimmt nicht an, dass jede Fahrt auf jedem Gerät liegt; der Abgleich läuft zeitbasiert (AC-X3), nicht über die Health-UUID.
 - **Sicht-Prüfung mit Health-Daten** steht aus: Leerzustand von „Fahrten“ im Simulator gesehen (23.11.), aber ohne Fahrten; Listen, Vorschläge und „Vielleicht doppelt“ nur durch Attrappen-Tests belegt.
 
-## CloudKit-Schema (Development angelegt 25.11., Deploy offen)
-- **Stand:** Development enthält die fünf Satztypen `CD_Batch` (18 Felder), `CD_Product` (21), `CD_PurchaseEvaluation` (13), `CD_ShoppingListItem` (16), `CD_StockMovement` (17) plus `Users`. Production enthält nur `Users`.
-- **Wie:** `cloudkit/schema.ckdb` per `cktool` importiert, ohne iCloud-Anmeldung (gespeicherter CloudKit-Management-Token):
+## CloudKit-Schema (in Production, 25.11.)
+- **Stand:** Der Maintainer hat das Schema am 25.11. nach Production deployt. Per `scripts/pruefe-cloudkit-schema.py --environment production` (nur lesend) belegt: `CD_Batch` (18 Felder), `CD_Product` (21), `CD_PurchaseEvaluation` (13), `CD_ShoppingListItem` (16), `CD_StockMovement` (17) plus `Users`, „Schema stimmt überein“. Development ebenso.
+- **Wie angelegt:** `cloudkit/schema.ckdb` per `cktool` nach Development importiert, ohne iCloud-Anmeldung (gespeicherter CloudKit-Management-Token):
   ```
   xcrun cktool import-schema --team-id J2DU2P47XW --container-id iCloud.de.linolaske.carbstock \
     --environment development --validate --file cloudkit/schema.ckdb
   scripts/pruefe-cloudkit-schema.py            # Development gegen die Datei, nur lesend
   ```
 - **Herkunft der Felder:** Abbildung Core Data → CloudKit nach Apple („Reading CloudKit Records for Core Data“); `CloudKitSchemaFileTests` hält die Datei feld- und typgenau am SwiftData-Modell. Bei Modelländerungen (nur additiv): Datei ergänzen, Test grün, neu importieren.
-- **Nur Lino:** CloudKit-Konsole → Container → „Deploy Schema Changes…“ nach Production. Danach `scripts/pruefe-cloudkit-schema.py --environment production`.
-- **Vor dem Deploy wissen:** In Production lassen sich Satztypen und Felder nie mehr ändern. Die Typen sind noch nicht durch einen echten Geräte-Abgleich bestätigt. Wer das vorher will: auf einem Gerät mit iCloud einmal das Debug-Werkzeug (Xcode-Schema `CarbStockSchema` → „Schema anlegen“) laufen lassen; meldet es Erfolg und das Prüfskript weiter „stimmt überein“, passen sie. Development lässt sich in der Konsole zurücksetzen, Production nicht.
+- **Ab jetzt endgültig:** In Production lassen sich Satztypen und Felder nicht mehr umbenennen oder löschen. Neue Felder nur additiv: Modell, `schema.ckdb`, Import nach Development, Prüfung; den Deploy nach Production macht nur der Maintainer.
+- **Noch unbelegt:** ein echter Abgleich zwischen Geräten (Spike S1). Das Schema ist per Export geprüft, nicht das Zusammenspiel der Spiegelung damit.
 
 ## Nächste Schritte (Reihenfolge)
-0. **Lino: CloudKit-Schema nach Production deployen** (Gate G1 erledigt, Development angelegt 25.11.), siehe „CloudKit-Schema“ oben.
+0. **Spike S1: Abgleich auf echten Geräten prüfen** (CloudKit-Schema seit 25.11. in Production, siehe oben).
    Offen ohne Schema-Bezug: Einkaufsliste, Einkaufsverlauf und Packlisten fehlen in der Sicherung.
 1. **M7 Rest:** Einstellungen über iCloud-KVS (O-24) bewusst noch nicht gebaut: es gibt keine synchronisierte Einstellung (Farbschwellen, Horizont, Reserve haben keine Oberfläche; Carbs/h und Erinnerungen sind gerätelokal). Baut man den `SettingsStore` jetzt, hat er keinen Nutzer. Wird mit der ersten solchen Einstellung gebaut; Prüfung am Gerät (Spike S1) liegt bei Lino.
 2. **M4b Rest:** Englisch-Frage O-21 vor dem externen TestFlight. (Neutrale Leerzustände: erledigt 24.11., siehe Tabelle.)
