@@ -1,6 +1,6 @@
 # CarbStock – Status und Übergabe
 
-**Stand:** 24.11.2026
+**Stand:** 25.11.2026
 Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderung des Stands mitpflegen.
 
 ## Was steht (main)
@@ -31,13 +31,14 @@ Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderu
 | Inventarisierungshelfer (Lino 23.11.) | Bestand → „Inventur“: **Erstaufnahme** (Produkt, Menge, MHD, mehrere Chargen am Stück, Neues Produkt) und **Zählen** (gezählt gegen erwartet, bucht nur die Differenz als `adjust` mit Notiz „Inventur“, Bestätigung, Zusammenfassung). Core `InventoryCount` verteilt die Differenz auf Chargen (Spec 4.6). Kein neues Datenfeld, kein Schema-Eingriff. Hell, dunkel, größte Schrift im Simulator gesehen | Core 142 (+10), App +5 Tests; Karte „Inventarisierungshelfer“ |
 | M9a Externe Aktivitäten (Core) | `ExternalActivity`, idempotenter Import, Duplikatregel (≤ 5 min, ≥ 80 %, Sportart; „Vielleicht doppelt“), Nutzerentscheidungen, Zählung einmal, Vorschlag „erledigt“ | 26 Core-Tests (AC-X1…X5), Core gesamt 118 |
 | M9c Apple Health (Lesen) | Tab Training → „Fahrten aus Apple Health“: einlesen (nur Radfahrten, 90 Tage, Beginn und Dauer), Duplikate zusammengefasst, Vorschlag „Session als erledigt markieren“ (bucht nichts), Ausblenden, Löschen. Store „Imports“ lokal, vom Geräte-Backup ausgenommen, nicht im Export; „Alle Daten löschen“ räumt ihn. HealthKit-Entitlement + Nutzungstext gesetzt. Quelle hinter Protokoll (`WorkoutSource`), Tests mit Attrappe | 10 App-Tests `ActivityServiceTests`, Schema-Test Imports; App gesamt 117 grün |
+| **Gate G1 Schema-Review (25.11.)** | **Erledigt:** alle 12 `@Model`-Typen erfüllen die CloudKit-Regeln, kein Verstoß, keine Modelländerung. Neuer Test im Core-Paket (`ModelSourceRulesTests`, läuft ohne Simulator und in der CI), App-Test prüft zusätzlich Vorgabewerte am echten Schema. Fund behoben: Sicherung behält jetzt Bezugsquelle, Buchungsnotiz, Session-Titel/-Notiz/-Startzeit (Version bleibt 1, alte Sicherungen lesbar) | `docs/G1-SCHEMA-REVIEW.md`; Core 154, App- und UI-Tests 169 |
 
 Bekannte Verhaltensdetails: ±-Schnellbuchung bucht nicht, wenn nur abgelaufener Bestand da ist (Meldung in der Liste); Abgang über mehrere Chargen meldet `insufficientStock` statt negativ zu buchen. Negativer Bestand entsteht damit nur noch durch Sync-Überschneidung (TV-8) und wird als Konflikt angezeigt.
 Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meldung → Tab „Zuerst“ ohne UI-Test.
 
 ## Zum Build 0.1.0 (1): was nur Lino tun kann
 - **Internen Tester anlegen** (App Store Connect → TestFlight → interne Gruppe, Lino als Tester): Schreibaktion im Konto, daher nicht durch Agenten.
-- **CloudKit-Schema nach Production promoten** (CloudKit-Konsole, Container `iCloud.de.linolaske.carbstock`, bewusster Schritt nach Schema-Review G1). TestFlight-Builds nutzen Production; ohne Promotion läuft die App lokal, synchronisiert aber nicht.
+- **CloudKit-Schema nach Production promoten** (CloudKit-Konsole, Container `iCloud.de.linolaske.carbstock`). Schema-Review G1 ist erledigt; vorher muss das Development-Schema vollständig sein (siehe „Nächste Schritte“ und `docs/G1-SCHEMA-REVIEW.md`). TestFlight-Builds nutzen Production; ohne Promotion läuft die App lokal, synchronisiert aber nicht.
 - Build-Nummer vor jedem weiteren Upload erhöhen (`CURRENT_PROJECT_VERSION` in `project.yml`).
 - Export-Hinweis: Mit Homebrew-rsync im PATH scheitert Xcodes IPA-Export („--extended-attributes unknown option“). Abhilfe: `PATH=/usr/bin:/bin:/usr/sbin:/sbin:… xcodebuild -exportArchive …`.
 
@@ -48,6 +49,11 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 - **Sicht-Prüfung mit Health-Daten** steht aus: Leerzustand von „Fahrten“ im Simulator gesehen (23.11.), aber ohne Fahrten; Listen, Vorschläge und „Vielleicht doppelt“ nur durch Attrappen-Tests belegt.
 
 ## Nächste Schritte (Reihenfolge)
+0. **Lino: CloudKit-Promotion** (Gate G1 erledigt, Reihenfolge siehe `docs/G1-SCHEMA-REVIEW.md` → „Vor der Promotion“):
+   a. Development-Schema vollständig anlegen (`initializeCloudKitSchema` in einem signierten Debug-Build; das Werkzeug fehlt noch und muss zuerst gebaut werden, sonst fehlen nie beschriebene Felder wie `StockMovement.deviceID`);
+   b. in der CloudKit-Konsole die fünf `CD_…`-Satztypen mit allen Feldern gegen die Liste im Review prüfen;
+   c. „Deploy Schema Changes“ nach Production. Danach nur noch additive Änderungen.
+   Offen ohne Schema-Bezug: Einkaufsliste, Einkaufsverlauf und Packlisten fehlen in der Sicherung.
 1. **M7 Rest:** Einstellungen über iCloud-KVS (O-24) bewusst noch nicht gebaut: es gibt keine synchronisierte Einstellung (Farbschwellen, Horizont, Reserve haben keine Oberfläche; Carbs/h und Erinnerungen sind gerätelokal). Baut man den `SettingsStore` jetzt, hat er keinen Nutzer. Wird mit der ersten solchen Einstellung gebaut; Prüfung am Gerät (Spike S1) liegt bei Lino.
 2. **M4b Rest:** Englisch-Frage O-21 vor dem externen TestFlight. (Neutrale Leerzustände: erledigt 24.11., siehe Tabelle.)
 3. **M9 Trainingsquellen:** M9a (Core) und M9c (Health lesen) stehen; Strava (M9b) wartet auf Linos Wahl A/B/C und ist laut Lino nachrangig: `docs/TRAININGSQUELLEN.md`.
