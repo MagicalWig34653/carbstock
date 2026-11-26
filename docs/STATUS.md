@@ -40,6 +40,11 @@ Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderu
 Bekannte Verhaltensdetails: ±-Schnellbuchung bucht nicht, wenn nur abgelaufener Bestand da ist (Meldung in der Liste); Abgang über mehrere Chargen meldet `insufficientStock` statt negativ zu buchen. Negativer Bestand entsteht damit nur noch durch Sync-Überschneidung (TV-8) und wird als Konflikt angezeigt.
 Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meldung → Tab „Zuerst“ ohne UI-Test.
 
+## Build 0.1.0 (3): archiviert, noch nicht hochgeladen (26.11.)
+- Archiv aus `02805f6` (Icon C v2, vollständige Sicherung, Health-Schreib-Text). Auf diesem Commit: Core 157, App- und UI-Tests 192 bestanden, 2 übersprungen (Schema-Läufe nur auf Wunsch), Icon-Prüfung ohne Befund.
+- In App Store Connect liegt bisher nur Build 1. Der Upload-Versuch vom 24.11. scheiterte am fehlenden `NSHealthUpdateUsageDescription`.
+- Offen: Freigabe, IPA-Prüfung der Distribution-Signierung, Upload, Status VALID, interne Gruppe, „Was testen“ (Deutsch).
+
 ## Zum Build 0.1.0 (1): was nur Lino tun kann
 - **Internen Tester anlegen** (App Store Connect → TestFlight → interne Gruppe, Lino als Tester): Schreibaktion im Konto, daher nicht durch Agenten.
 - **Erledigt (25.11.): CloudKit-Schema in Production** (siehe „CloudKit-Schema“). Ob die TestFlight-Version damit synchronisiert, ist noch an keinem Gerät belegt (Spike S1).
