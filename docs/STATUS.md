@@ -40,13 +40,14 @@ Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderu
 Bekannte Verhaltensdetails: ±-Schnellbuchung bucht nicht, wenn nur abgelaufener Bestand da ist (Meldung in der Liste); Abgang über mehrere Chargen meldet `insufficientStock` statt negativ zu buchen. Negativer Bestand entsteht damit nur noch durch Sync-Überschneidung (TV-8) und wird als Konflikt angezeigt.
 Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meldung → Tab „Zuerst“ ohne UI-Test.
 
-## Build 0.1.0 (3): archiviert, noch nicht hochgeladen (26.11.)
+## Build 0.1.0 (3): in TestFlight, intern im Test (26.11.)
 - Archiv aus `02805f6` (Icon C v2, vollständige Sicherung, Health-Schreib-Text). Auf diesem Commit: Core 157, App- und UI-Tests 192 bestanden, 2 übersprungen (Schema-Läufe nur auf Wunsch), Icon-Prüfung ohne Befund.
-- In App Store Connect liegt bisher nur Build 1. Der Upload-Versuch vom 24.11. scheiterte am fehlenden `NSHealthUpdateUsageDescription`.
-- Offen: Freigabe, IPA-Prüfung der Distribution-Signierung, Upload, Status VALID, interne Gruppe, „Was testen“ (Deutsch).
+- IPA vor dem Upload geprüft (Apple Distribution): `aps-environment=production`, iCloud-Umgebung Production, `get-task-allow=false`, HealthKit vorhanden.
+- Hochgeladen am 26.11. nach Freigabe, ohne `testFlightInternalTestingOnly`. App Store Connect: VALID, `usesNonExemptEncryption=false`, Gruppe `intern` (Zugriff auf alle Builds, 1 Tester) mit `IN_BETA_TESTING`, extern `READY_FOR_BETA_SUBMISSION`. „Was testen“ (de-DE) steht am Build.
+- Beim Maintainer: externe Gruppen anlegen/zuordnen und zur Beta-Prüfung einreichen.
+- Bekannt, nicht in diesem Build behoben: „1 Sessions“ (Einzahl).
 
-## Zum Build 0.1.0 (1): was nur Lino tun kann
-- **Internen Tester anlegen** (App Store Connect → TestFlight → interne Gruppe, Lino als Tester): Schreibaktion im Konto, daher nicht durch Agenten.
+## Zu TestFlight allgemein
 - **Erledigt (25.11.): CloudKit-Schema in Production** (siehe „CloudKit-Schema“). Ob die TestFlight-Version damit synchronisiert, ist noch an keinem Gerät belegt (Spike S1).
 - Build-Nummer vor jedem weiteren Upload erhöhen (`CURRENT_PROJECT_VERSION` in `project.yml`).
 - Export-Hinweis: Mit Homebrew-rsync im PATH scheitert Xcodes IPA-Export („--extended-attributes unknown option“). Abhilfe: `PATH=/usr/bin:/bin:/usr/sbin:/sbin:… xcodebuild -exportArchive …`.
