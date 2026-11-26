@@ -14,6 +14,7 @@ if [ "$what" = all ] || [ "$what" = app ]; then
   xcodegen generate --quiet
   $SPARSAM xcodebuild test -project CarbStock.xcodeproj -scheme CarbStock \
     -destination "$DEST" -derivedDataPath build/DerivedData \
-    CODE_SIGNING_ALLOWED=NO CARBSTOCK_CLOUDKIT=NO -quiet
+    CODE_SIGNING_ALLOWED=NO CARBSTOCK_CLOUDKIT=NO \
+    -collect-test-diagnostics never -quiet
   python3 -I scripts/pruefe-app-icon.py build/DerivedData/Build/Products/Debug-iphonesimulator/CarbStock.app
 fi
