@@ -58,7 +58,7 @@ struct DataSettingsSection: View {
             Button("Sicherung importieren", systemImage: "square.and.arrow.down") { importing = true }
             NavigationLink { DuplicateProductsView() } label: { Label("Doppelte Produkte", systemImage: "square.on.square") }
         } header: { Text("Daten") } footer: {
-            Text("Die Sicherung ist eine JSON-Datei mit Vorrat, Buchungen, Sessions und Wochenvorlage. Ein Import fügt nur hinzu, was fehlt.")
+            Text("Die Sicherung ist eine JSON-Datei mit Vorrat, Buchungen, Einkaufsliste, Einkaufsverlauf, Sessions, Wochenvorlage und Packlisten. Ein Import fügt nur hinzu, was fehlt.")
         }
 
         Section {
@@ -77,7 +77,10 @@ struct DataSettingsSection: View {
             do {
                 let r = try service.importBackup(data)
                 message = r.total == 0 ? "Nichts Neues: alles aus der Sicherung ist schon vorhanden."
-                    : "Importiert: \(r.products) Produkte, \(r.batches) Chargen, \(r.movements) Buchungen, \(r.sessions) Sessions."
+                    : """
+                    Importiert: \(r.products) Produkte, \(r.batches) Chargen, \(r.movements) Buchungen, \(r.sessions) Sessions.
+                    Einkaufsliste: \(r.shoppingItems), Verlauf: \(r.purchaseEvaluations), Packlisten: \(r.packLists).
+                    """
             } catch let f as BackupService.Failure { message = f.message } catch { message = "Der Import hat nicht geklappt." }
         }
         .confirmationDialog("Wirklich alle Daten löschen?", isPresented: $confirmDelete, titleVisibility: .visible) {

@@ -146,6 +146,61 @@ import Testing
         #expect(!back.products[0].hasCaffeine && !back.products[0].hasLactate)
     }
 
+    // MARK: Einkaufsliste, Verlauf, Packlisten, Zeitpunkte
+
+    func fullSample() -> BackupDocument {
+        var doc = sample()
+        let product = doc.products[0].id, batch = doc.batches[0].id
+        doc.shoppingItems = [BackupShoppingItem(id: UUID(), productID: product, freeText: "Gel", plannedQuantity: 4,
+                                                estimatedTotalPriceCents: 600, state: "bought", createdAt: t0,
+                                                expiryDay: "2027-09-19", offerJSON: Data("{}".utf8), batchID: batch)]
+        doc.purchaseEvaluations = [BackupPurchaseEvaluation(id: UUID(), verdict: "buyPartially", verdictQuantity: 3,
+                                                            userDecision: "none", createdAt: t0,
+                                                            inputJSON: Data("{}".utf8), reasonsJSON: Data("[]".utf8))]
+        doc.packLists = [BackupPackList(id: UUID(), sessionID: doc.sessions[0].id, title: "Runde", targetCarbsG: 110.5,
+                                        reservePercent: 10, state: "packing", createdAt: t0,
+                                        items: [BackupPackItem(id: UUID(), productID: product, batchID: batch,
+                                                               plannedQuantity: 5, plannedCarbsG: 125)])]
+        doc.recordTimes = [product: BackupRecordTimes(createdAt: t0, updatedAt: t0.addingTimeInterval(60))]
+        doc.carbRateTimes = [.long: t0]
+        return doc
+    }
+
+    @Test func listsHistoryPackListsAndTimesSurviveBackupRoundTrip() throws {
+        let doc = fullSample()
+        let data = try doc.encoded()
+        #expect(try BackupDocument.decode(data) == doc)
+        #expect(try doc.encoded() == data)
+    }
+
+    /// Sicherung aus der Version vor Einkaufsliste, Verlauf, Packlisten und Zeitpunkten: die Schlüssel fehlen.
+    @Test func backupWithoutListsAndTimesStillDecodes() throws {
+        var json = try #require(try JSONSerialization.jsonObject(with: fullSample().encoded()) as? [String: Any])
+        for key in ["shoppingItems", "purchaseEvaluations", "packLists", "recordTimes", "carbRateTimes"] {
+            #expect(json.removeValue(forKey: key) != nil, "\(key) wird nicht geschrieben")
+        }
+        let back = try BackupDocument.decode(try JSONSerialization.data(withJSONObject: json))
+        #expect(back.shoppingItems.isEmpty && back.purchaseEvaluations.isEmpty && back.packLists.isEmpty)
+        #expect(back.recordTimes.isEmpty && back.carbRateTimes.isEmpty && back.products.count == 1)
+    }
+
+    @Test func importPlanSkipsKnownListsAndRepeatedIDs() {
+        var doc = fullSample()
+        // Dieselbe ID zweimal in der Datei (CloudKit erzwingt keine Eindeutigkeit): nur einmal anlegen.
+        doc.shoppingItems.append(doc.shoppingItems[0])
+        doc.purchaseEvaluations.append(doc.purchaseEvaluations[0])
+        doc.packLists.append(doc.packLists[0])
+        let all = doc.importPlan(knownProducts: [], knownBatches: [], knownMovements: [], knownSessions: [], knownTemplate: [])
+        #expect(all.shoppingItems.count == 1 && all.purchaseEvaluations.count == 1 && all.packLists.count == 1)
+        let again = doc.importPlan(knownProducts: Set(doc.products.map(\.id)), knownBatches: Set(doc.batches.map(\.id)),
+                                   knownMovements: Set(doc.movements.map(\.id)), knownSessions: Set(doc.sessions.map(\.id)),
+                                   knownTemplate: Set(doc.template.map(\.id)),
+                                   knownShoppingItems: Set(doc.shoppingItems.map(\.id)),
+                                   knownEvaluations: Set(doc.purchaseEvaluations.map(\.id)),
+                                   knownPackLists: Set(doc.packLists.map(\.id)))
+        #expect(again.isEmpty)
+    }
+
     @Test func differentAdditivesAreNotDuplicates() {
         func p(_ c: Bool, _ l: Bool) -> ProductInfo {
             ProductInfo(name: "Gel", brand: "Maurten", category: .gel, baseUnit: .piece, carbsPerPortionG: 25, hasCaffeine: c, hasLactate: l)

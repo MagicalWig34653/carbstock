@@ -14,7 +14,8 @@ final class BackupService {
 
     struct ImportResult: Equatable {
         var products = 0, batches = 0, movements = 0, sessions = 0, template = 0, rates = 0
-        var total: Int { products + batches + movements + sessions + template + rates }
+        var shoppingItems = 0, purchaseEvaluations = 0, packLists = 0
+        var total: Int { products + batches + movements + sessions + template + rates + shoppingItems + purchaseEvaluations + packLists }
     }
 
     private let context: ModelContext
@@ -30,13 +31,49 @@ final class BackupService {
     // MARK: Export
 
     func document() -> BackupDocument {
-        let products = (try? context.fetch(FetchDescriptor<Product>())) ?? []
+        let products = fetchAll(Product.self)
         let batches = products.flatMap { $0.batches ?? [] }
-        let movements = ((try? context.fetch(FetchDescriptor<StockMovement>())) ?? []).compactMap(\.info)
+        let movements = fetchAll(StockMovement.self).compactMap(\.info)
         let training = TrainingService(context: context)
+        let sessions = training.sessions()
+        var times: [UUID: BackupRecordTimes] = [:]
+        for p in products { times[p.id] = BackupRecordTimes(createdAt: p.createdAt, updatedAt: p.updatedAt) }
+        for b in batches { times[b.id] = BackupRecordTimes(createdAt: b.createdAt, updatedAt: b.updatedAt) }
+        for s in sessions { times[s.id] = BackupRecordTimes(createdAt: s.createdAt) }
+        let rates = training.userRates()
+        // Same rule as `userRates`: the youngest record of a type counts.
+        var rateTimes: [SessionType: Date] = [:]
+        for r in fetchAll(CarbRateOverride.self) {
+            guard let type = SessionType(rawValue: r.typeRaw), rates[type] != nil else { continue }
+            rateTimes[type] = max(rateTimes[type] ?? r.updatedAt, r.updatedAt)
+        }
+        // Sorted by ID so that the same data gives the same file.
+        func byID<T>(_ records: [T], _ id: KeyPath<T, UUID>) -> [T] {
+            records.sorted { $0[keyPath: id].uuidString < $1[keyPath: id].uuidString }
+        }
+        let shopping = byID(fetchAll(ShoppingListItem.self), \.id).map {
+            BackupShoppingItem(id: $0.id, productID: $0.productID, freeText: $0.freeText, plannedQuantity: $0.plannedQuantity,
+                               estimatedTotalPriceCents: $0.estimatedTotalPriceCents, state: $0.stateRaw, createdAt: $0.createdAt,
+                               expiryDay: $0.expiryDay, offerJSON: $0.offerJSON, batchID: $0.batchID)
+        }
+        let evaluations = byID(fetchAll(PurchaseEvaluation.self), \.id).map {
+            BackupPurchaseEvaluation(id: $0.id, verdict: $0.verdictRaw, verdictQuantity: $0.verdictQuantity,
+                                     userDecision: $0.userDecisionRaw, createdAt: $0.createdAt,
+                                     inputJSON: $0.inputJSON, reasonsJSON: $0.reasonsJSON)
+        }
+        let packLists = byID(fetchAll(PackList.self), \.id).map { list in
+            BackupPackList(id: list.id, sessionID: list.sessionID, title: list.title, targetCarbsG: list.targetCarbsG,
+                           reservePercent: list.reservePercent, state: list.stateRaw, createdAt: list.createdAt,
+                           items: byID(list.items ?? [], \.id).map {
+                               BackupPackItem(id: $0.id, productID: $0.productID, batchID: $0.batchID,
+                                              plannedQuantity: $0.plannedQuantity, plannedCarbsG: $0.plannedCarbsG)
+                           })
+        }
         return BackupDocument(exportedAt: now(), products: products.map(\.info), batches: batches.compactMap(\.info),
-                              movements: movements, sessions: training.sessions().compactMap(\.info),
-                              template: training.templateRecords().compactMap(\.info), carbRates: training.userRates())
+                              movements: movements, sessions: sessions.compactMap(\.info),
+                              template: training.templateRecords().compactMap(\.info), carbRates: rates,
+                              shoppingItems: shopping, purchaseEvaluations: evaluations, packLists: packLists,
+                              recordTimes: times, carbRateTimes: rateTimes)
     }
 
     func exportData() throws -> Data { try document().encoded() }
@@ -66,6 +103,10 @@ final class BackupService {
                                 glucoseFructoseRatio: p.glucoseFructoseRatio,
                                 hasCaffeine: p.hasCaffeine, hasLactate: p.hasLactate)
             model.isArchived = p.isArchived
+            if let t = doc.recordTimes[p.id] {
+                model.createdAt = t.createdAt
+                model.updatedAt = t.updatedAt ?? t.createdAt
+            }
             context.insert(model)
             products[p.id] = model
         }
@@ -77,6 +118,10 @@ final class BackupService {
             model.currency = b.currency
             model.useDespiteExpiry = b.useDespiteExpiry
             model.isArchived = b.isArchived
+            if let t = doc.recordTimes[b.id] {
+                model.createdAt = t.createdAt
+                model.updatedAt = t.updatedAt ?? t.createdAt
+            }
             context.insert(model)
             batches[b.id] = model
         }
@@ -98,6 +143,7 @@ final class BackupService {
             model.title = s.title
             model.note = s.note
             model.startTime = s.startTime
+            if let t = doc.recordTimes[s.id] { model.createdAt = t.createdAt }
             context.insert(model)
         }
         for t in plan.template {
@@ -113,12 +159,50 @@ final class BackupService {
         let current = training.userRates()
         var rates = 0
         for (type, value) in doc.carbRates where current[type] == nil && TrainingLimits.carbsPerHour.contains(value) {
-            context.insert(CarbRateOverride(type: type, carbsPerHour: value))
+            context.insert(CarbRateOverride(type: type, carbsPerHour: value, updatedAt: doc.carbRateTimes[type] ?? now()))
             rates += 1
+        }
+        // Lists point at products, batches and sessions by ID only; a target deleted before the export may be missing.
+        for s in plan.shoppingItems {
+            let model = ShoppingListItem(productID: s.productID, freeText: s.freeText, plannedQuantity: s.plannedQuantity,
+                                         estimatedTotalPriceCents: s.estimatedTotalPriceCents)
+            model.id = s.id
+            model.stateRaw = s.state
+            model.createdAt = s.createdAt
+            model.expiryDay = s.expiryDay
+            model.offerJSON = s.offerJSON
+            model.batchID = s.batchID
+            context.insert(model)
+        }
+        for e in plan.purchaseEvaluations {
+            let model = PurchaseEvaluation(verdictRaw: e.verdict, inputJSON: e.inputJSON, reasonsJSON: e.reasonsJSON)
+            model.id = e.id
+            model.verdictQuantity = e.verdictQuantity
+            model.userDecisionRaw = e.userDecision
+            model.createdAt = e.createdAt
+            context.insert(model)
+        }
+        // A known list is left as it is, items included: it may have been recalculated since the export.
+        for l in plan.packLists {
+            let list = PackList(title: l.title, targetCarbsG: l.targetCarbsG, reservePercent: l.reservePercent, sessionID: l.sessionID)
+            list.id = l.id
+            list.stateRaw = l.state
+            list.createdAt = l.createdAt
+            context.insert(list)
+            for i in l.items {
+                let item = PackListItem(productID: UUID(), batchID: UUID(), plannedQuantity: i.plannedQuantity, plannedCarbsG: i.plannedCarbsG)
+                item.id = i.id
+                item.productID = i.productID
+                item.batchID = i.batchID
+                item.packList = list
+                context.insert(item)
+            }
         }
         try context.save()
         return ImportResult(products: plan.products.count, batches: plan.batches.count, movements: plan.movements.count,
-                            sessions: plan.sessions.count, template: plan.template.count, rates: rates)
+                            sessions: plan.sessions.count, template: plan.template.count, rates: rates,
+                            shoppingItems: plan.shoppingItems.count, purchaseEvaluations: plan.purchaseEvaluations.count,
+                            packLists: plan.packLists.count)
     }
 
     private func decode(_ data: Data) throws -> BackupDocument {
@@ -136,13 +220,19 @@ final class BackupService {
         return doc
     }
 
+    private func fetchAll<T: PersistentModel>(_: T.Type) -> [T] {
+        (try? context.fetch(FetchDescriptor<T>())) ?? []
+    }
+
     private func plan(for doc: BackupDocument) -> BackupDocument.ImportPlan {
         func ids<T: PersistentModel>(_ type: T.Type, _ id: KeyPath<T, UUID>) -> Set<UUID> {
-            Set(((try? context.fetch(FetchDescriptor<T>())) ?? []).map { $0[keyPath: id] })
+            Set(fetchAll(type).map { $0[keyPath: id] })
         }
         return doc.importPlan(knownProducts: ids(Product.self, \.id), knownBatches: ids(Batch.self, \.id),
                               knownMovements: ids(StockMovement.self, \.id), knownSessions: ids(TrainingSession.self, \.id),
-                              knownTemplate: ids(WeeklyTemplateRecord.self, \.id))
+                              knownTemplate: ids(WeeklyTemplateRecord.self, \.id),
+                              knownShoppingItems: ids(ShoppingListItem.self, \.id),
+                              knownEvaluations: ids(PurchaseEvaluation.self, \.id), knownPackLists: ids(PackList.self, \.id))
     }
 
     // MARK: Merge duplicates (AC-S4)
@@ -199,5 +289,8 @@ final class BackupService {
 
 extension BackupDocument.ImportPlan {
     /// Number of records an import would add.
-    var total: Int { products.count + batches.count + movements.count + sessions.count + template.count }
+    var total: Int {
+        products.count + batches.count + movements.count + sessions.count + template.count
+            + shoppingItems.count + purchaseEvaluations.count + packLists.count
+    }
 }

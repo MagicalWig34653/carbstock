@@ -458,7 +458,7 @@ Archivieren statt Löschen für Produkt und Charge; Buchungen werden nie einzeln
 | Sync-Status in der Oberfläche | Umfang hängt vom gewählten Framework ab **❓ O-03**; Mindestanforderung: „iCloud verfügbar ja/nein“ und Zeit der letzten bekannten Änderung |
 
 ### 9.6 Sicherung unabhängig von iCloud **[Vorschlag] ❓ O-17**
-**Export/Import (JSON, plus CSV der Buchungen)** als manuelle Sicherung und Ausweg bei Sync-Problemen. Original Abschnitt 6 hält „Lokal + Import/Export“ selbst für ausreichend. Import ist idempotent (gleiche IDs werden nicht verdoppelt). Empfehlung: in V1.
+**Export/Import (JSON, plus CSV der Buchungen)** als manuelle Sicherung und Ausweg bei Sync-Problemen. Original Abschnitt 6 hält „Lokal + Import/Export“ selbst für ausreichend. Import ist idempotent (gleiche IDs werden nicht verdoppelt). Empfehlung: in V1. Stand 26.11.: Die JSON-Sicherung enthält auch Einkaufsliste, Einkaufsverlauf, Packlisten und die Anlege-/Änderungszeitpunkte; fehlen diese Felder in einer älteren Datei, bleibt der Bereich leer. CSV ist nicht gebaut.
 
 ### 9.7 Risiken des iCloud-Wegs (ehrlich)
 - Sync-Fehler lassen sich ohne eigenes Backend nur eingeschränkt beobachten (kein Server-Log); Fehlersuche über CloudKit-Dashboard/Konsole und Geräte-Logs.

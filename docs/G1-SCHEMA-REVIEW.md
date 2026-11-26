@@ -64,9 +64,10 @@ Der Export (Spec 9.6, AC-S7) verlor beim Wiederherstellen `Batch.source`, `Stock
 
 **Warum kein Datenverlust und keine Migration:** Kein `@Model` wurde geändert, vorhandene lokale Daten bleiben unberührt. Die Sicherung bekam nur zusätzliche optionale JSON-Felder, die Dateiversion bleibt 1. Alte Sicherungen importieren wie bisher (Felder leer). Eine ältere App-Version ignoriert die neuen Felder.
 
-**Weiterhin nicht in der Sicherung** (ohne Bezug zum CloudKit-Schema, kann jederzeit nachgezogen werden):
-- Einkaufsliste, Einkaufsverlauf und Packlisten (`ShoppingListItem`, `PurchaseEvaluation`, `PackList`, `PackListItem`)
-- Anlege-/Änderungszeitpunkte von Produkten, Chargen und Sessions, `deviceID`
+**Nachtrag 26.11.:** Einkaufsliste, Einkaufsverlauf, Packlisten (`ShoppingListItem`, `PurchaseEvaluation`, `PackList`, `PackListItem`) sowie die Anlege-/Änderungszeitpunkte sind jetzt in der Sicherung, ebenfalls nur als zusätzliche optionale JSON-Felder.
+
+**Weiterhin nicht in der Sicherung:**
+- `StockMovement.deviceID` (wird nirgends beschrieben) und `schemaVersion` (überall 1)
 - Importierte Apple-Health-Fahrten: bewusst ausgeschlossen
 
 ## Vor der Promotion (abgeschlossen)

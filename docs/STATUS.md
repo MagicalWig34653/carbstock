@@ -1,6 +1,6 @@
 # CarbStock – Status und Übergabe
 
-**Stand:** 25.11.2026
+**Stand:** 26.11.2026
 Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderung des Stands mitpflegen.
 
 ## Was steht (main)
@@ -17,6 +17,7 @@ Diese Datei ist die Quelle der Wahrheit für den Arbeitsstand. Bei jeder Änderu
 
 | M6 Packliste | Planer je Session oder freiem Ziel, Abhaken = eine Buchung, Haken weg = Gegenbuchung, Rest zurücklegen, Fertig = schreibgeschützt | AC-L1…L6 |
 | M7 Sicherung (Teil) | Export/Import JSON (idempotent), doppelte Produkte zusammenführen, Alle Daten löschen, iCloud-Status | App-Tests |
+| Sicherung vollständig (26.11.) | Zusätzlich in Export und Import: Einkaufsliste, Einkaufsverlauf, Packlisten samt Posten (der Haken bleibt, weil die Posten-ID erhalten bleibt) und die Anlege-/Änderungszeitpunkte von Produkten, Chargen, Sessions und Carbs/h-Abweichungen. Neue JSON-Schlüssel `shoppingItems`, `purchaseEvaluations`, `packLists`, `recordTimes`, `carbRateTimes`; Dateiversion bleibt 1, alte Sicherungen bleiben lesbar, eine ältere App ignoriert die neuen Schlüssel. Eine schon vorhandene Packliste bleibt beim Import unverändert, auch ihre Posten (sie kann inzwischen neu berechnet sein). Kein `@Model` und kein CloudKit-Schema geändert | `BackupCompletenessTests` (5), 3 Core-Tests, UI-Test `BackupRestoreUITests` (hell, dunkel, echter Dateien-Dialog) |
 
 | M8 (Teil) Erster TestFlight-Build | App-Icon (damals Platzhalter), signiertes Release-Archiv, Upload **0.1.0 (1)** am 23.11. über Xcode, in App Store Connect verarbeitet (VALID, Verteilung „intern“). Distribution-Signierung geprüft: `aps-environment=production`, iCloud-Umgebung Production, `get-task-allow=false` | Archiv + IPA-Prüfung, Core 92 Tests, App-Tests grün |
 
@@ -64,7 +65,6 @@ Nicht geprüft: Erinnerungen auf einem echten Gerät (Spike S3), Tippen auf Meld
 
 ## Nächste Schritte (Reihenfolge)
 0. **Spike S1: Abgleich auf echten Geräten prüfen** (CloudKit-Schema seit 25.11. in Production, siehe oben).
-   Offen ohne Schema-Bezug: Einkaufsliste, Einkaufsverlauf und Packlisten fehlen in der Sicherung.
 1. **M7 Rest:** Einstellungen über iCloud-KVS (O-24) bewusst noch nicht gebaut: es gibt keine synchronisierte Einstellung (Farbschwellen, Horizont, Reserve haben keine Oberfläche; Carbs/h und Erinnerungen sind gerätelokal). Baut man den `SettingsStore` jetzt, hat er keinen Nutzer. Wird mit der ersten solchen Einstellung gebaut; Prüfung am Gerät (Spike S1) liegt bei Lino.
 2. **M4b Rest:** Englisch-Frage O-21 vor dem externen TestFlight. (Neutrale Leerzustände: erledigt 24.11., siehe Tabelle.)
 3. **M9 Trainingsquellen:** M9a (Core) und M9c (Health lesen) stehen; Strava (M9b) wartet auf Linos Wahl A/B/C und ist laut Lino nachrangig: `docs/TRAININGSQUELLEN.md`.
