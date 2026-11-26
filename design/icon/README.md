@@ -1,6 +1,7 @@
 # Entwürfe für das neue App-Icon
 
-Noch nichts davon ist im Asset-Katalog. Dort kommt erst der gewählte Entwurf hin.
+**C v2 ist abgenommen (26.11.) und in der App:** `App/Resources/AppIcon.icon` ist eine unveränderte Kopie von
+`c-trikottasche/CarbStock.icon`. Wer den Entwurf ändert, kopiert ihn neu; `scripts/pruefe-app-icon.py` prüft das.
 
 ![Übersicht](uebersicht.jpg)
 
@@ -11,7 +12,7 @@ Noch nichts davon ist im Asset-Katalog. Dort kommt erst der gewählte Entwurf hi
 | C v2 | [Trikottasche](c-trikottasche/tafel.jpg) | Drei Rückentaschen, in jeder ein Gel | Farbig, zeigt „Vorrat“ | Getönt wenig Kontrast; in 40 px viele kleine Teile |
 | D | [Einzelnes Gel](d-einzelgel/tafel.jpg) | Ein Gel mit Tropfen | Am besten lesbar in 40 px | Kein Beutel; kann als Tube oder Flasche gelesen werden |
 
-**Gewählt: C**, mit der Änderung, dass jedes Gel in seiner eigenen Tasche sitzt statt auf der Naht (v2, wartet auf Abnahme).
+**Gewählt: C**, mit der Änderung, dass jedes Gel in seiner eigenen Tasche sitzt statt auf der Naht (v2).
 `pruefen.py` prüft diesen Abstand.
 
 ## Aufbau

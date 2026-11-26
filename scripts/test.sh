@@ -15,4 +15,5 @@ if [ "$what" = all ] || [ "$what" = app ]; then
   $SPARSAM xcodebuild test -project CarbStock.xcodeproj -scheme CarbStock \
     -destination "$DEST" -derivedDataPath build/DerivedData \
     CODE_SIGNING_ALLOWED=NO CARBSTOCK_CLOUDKIT=NO -quiet
+  python3 -I scripts/pruefe-app-icon.py build/DerivedData/Build/Products/Debug-iphonesimulator/CarbStock.app
 fi
