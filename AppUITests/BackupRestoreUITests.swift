@@ -109,27 +109,25 @@ final class BackupRestoreUITests: XCTestCase {
         shot(app, "30-sicherung-1-sichern", dark: dark)
         save.tap()
         confirmReplace(app)
-        XCTAssertTrue(app.staticTexts["Sichern unter"].waitForNonExistence(timeout: 15), "Sichern schließt den Dialog nicht")
+        XCTAssertTrue(filesDialog(app).waitForNonExistence(timeout: 15), "Sichern schließt den Dialog nicht")
     }
 
-    /// Liegt von einem früheren Lauf schon eine Datei da, fragt iOS verzögert nach. Die Abfrage kommt vom System
-    /// und kann außerhalb des Elementbaums der App liegen, deshalb auch dort suchen.
+    private func filesDialog(_ app: XCUIApplication) -> XCUIElement { app.navigationBars["FullDocumentManagerViewControllerNavigationBar"] }
+
+    /// Liegt von einem früheren Lauf schon eine Datei da, fragt iOS erst nach einigen Sekunden, ob sie ersetzt werden
+    /// soll. Die Abfrage kommt vom System (meist SpringBoard). Solange gewartet wird, bis sie bestätigt ist oder der
+    /// Dialog nach einer Mindestzeit ohne Abfrage verschwunden ist.
     private func confirmReplace(_ app: XCUIApplication) {
-        let hosts = [app, XCUIApplication(bundleIdentifier: "com.apple.springboard"),
-                     XCUIApplication(bundleIdentifier: "com.apple.DocumentsApp")]
-        let end = Date().addingTimeInterval(20)
-        while Date() < end && app.staticTexts["Sichern unter"].exists {
-            for host in hosts where host === app || host.state != .notRunning {
+        let hosts = [XCUIApplication(bundleIdentifier: "com.apple.springboard"), app]
+        let start = Date()
+        while Date().timeIntervalSince(start) < 30 {
+            for host in hosts {
                 let replace = host.buttons.matching(NSPredicate(format: "label IN %@", ["Ersetzen", "Replace"])).firstMatch
-                if replace.waitForExistence(timeout: 1) {
-                    replace.tap()
-                    return
-                }
+                if replace.waitForExistence(timeout: 1) { return replace.tap() }
             }
+            if Date().timeIntervalSince(start) > 10 && !filesDialog(app).exists { return }
         }
-        if app.staticTexts["Sichern unter"].exists {
-            for (i, host) in hosts.enumerated() where host.state != .notRunning { attachTree(host, "dialog-ersetzen-\(i)") }
-        }
+        for host in hosts { attachTree(host, "dialog-ersetzen") }
     }
 
     private func pickBackup(_ app: XCUIApplication, dark: Bool) {
