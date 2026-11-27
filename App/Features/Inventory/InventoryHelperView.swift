@@ -150,14 +150,14 @@ private struct CountView: View {
                 }
                 if !rows.isEmpty {
                     Section {
-                        Button(differing.count == 1 ? "1 Differenz buchen" : "\(differing.count) Differenzen buchen", systemImage: "checkmark") { confirming = true }
+                        Button(CountText.differencesToBook(differing.count), systemImage: "checkmark") { confirming = true }
                             .disabled(differing.isEmpty)
                         if let errorText { Text(errorText).foregroundStyle(.red).font(.footnote) }
                     }
                 }
             }
         }
-        .confirmationDialog(differing.count == 1 ? "1 Korrektur buchen?" : "\(differing.count) Korrekturen buchen?", isPresented: $confirming, titleVisibility: .visible) {
+        .confirmationDialog(CountText.correctionsToBook(differing.count), isPresented: $confirming, titleVisibility: .visible) {
             Button("Buchen") { book(rows) }
             Button("Abbrechen", role: .cancel) {}
         } message: {

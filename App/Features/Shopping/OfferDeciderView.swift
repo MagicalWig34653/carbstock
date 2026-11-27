@@ -127,7 +127,7 @@ struct OfferDeciderView: View {
     private var horizonSection: some View {
         Section {
             Stepper(value: $draft.horizonWeeks, in: OfferLimits.horizonWeeks) {
-                Text("Kaufhorizont: \(draft.horizonWeeks) \(draft.horizonWeeks == 1 ? "Woche" : "Wochen")")
+                Text("Kaufhorizont: \(CountText.weeks(draft.horizonWeeks))")
             }
             Toggle("Schnäppchenregel", isOn: $draft.bargainRule)
         } header: { Text("Bewertung") } footer: {

@@ -8,7 +8,7 @@ extension PackService.Failure {
         case .invalid: "Bitte prüfe Name, Ziel und Reserve."
         case .listFinished: "Diese Packliste ist fertig und kann nicht mehr geändert werden. Korrekturen laufen über normale Buchungen im Bestand."
         case .batchMissing: "Die Charge dieses Postens gibt es nicht mehr."
-        case .insufficientStock(let n): "Von dieser Charge fehlen \(n) Einheiten. Bitte Bestand prüfen oder die Liste neu berechnen."
+        case .insufficientStock(let n): "\(CountText.missingUnits(n)) Bitte Bestand prüfen oder die Liste neu berechnen."
         case .nothingToReturn: "Es ist nichts zum Zurücklegen da."
         case .returnTooMuch: "So viel wurde nicht gepackt."
         case .hasPackedItems: "Bitte erst die Haken entfernen, sonst bleibt der Bestand abgebucht."

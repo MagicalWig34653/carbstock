@@ -73,7 +73,7 @@ struct UseFirstView: View {
         Section {
             var parts: [String] = []
             if !s.expired.isEmpty { parts.append("\(s.expired.count) abgelaufen") }
-            if !s.soon.isEmpty { parts.append("\(s.soon.count) laufen in \(UseFirstSections.soonDays) Tagen ab") }
+            if !s.soon.isEmpty { parts.append(CountText.expiringSoon(s.soon.count, days: UseFirstSections.soonDays)) }
             return Label(parts.joined(separator: ", ") + " – Chargen prüfen", systemImage: "bell.badge")
                 .font(.subheadline.weight(.semibold))
                 .accessibilityAddTraits(.isHeader)

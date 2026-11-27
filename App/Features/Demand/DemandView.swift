@@ -41,7 +41,7 @@ enum RunwayText {
         case .unknown:
             "Bitte trag Sessions oder eine Wochenvorlage ein. Ohne Bedarf kann die App keine Reichweite nennen."
         case .reaches(_, let until):
-            "Bis \(Fmt.date(until)) (heute + \(today.days(until: until)) Tage)."
+            "Bis \(Fmt.date(until)) (heute + \(CountText.days(today.days(until: until))))."
         case .atLeast:
             "Danach ist kein Bedarf eingetragen, darüber hinaus gibt es keine belastbare Aussage."
         }
@@ -107,7 +107,7 @@ struct DemandView: View {
                 Text(RunwayText.headline(s)).font(.title2.bold())
                 Text(RunwayText.detail(s, today: today)).font(.subheadline).foregroundStyle(.secondary)
                 if case .atLeast = s, report.series.reachedCap {
-                    Text("Berechnet über maximal \(report.series.knownDays) Tage.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Berechnet über maximal \(CountText.days(report.series.knownDays)).").font(.footnote).foregroundStyle(.secondary)
                 }
             }
             .padding(.vertical, 4)
@@ -180,7 +180,7 @@ struct DemandView: View {
 struct WindowRow: View {
     let window: ForecastWindow
 
-    private var title: String { window.days % 7 == 0 ? (window.days == 7 ? "1 Woche" : "\(window.days / 7) Wochen") : "\(window.days) Tage" }
+    private var title: String { window.days % 7 == 0 ? CountText.weeks(window.days / 7) : CountText.days(window.days) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {

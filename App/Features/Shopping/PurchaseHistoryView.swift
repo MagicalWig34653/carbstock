@@ -83,7 +83,7 @@ struct PurchaseEvaluationDetailView: View {
                     if let c = offer.discountCents, c > 0 { LabeledContent("davon Rabatt", value: Fmt.euro(cents: c)) }
                     if let c = offer.shippingCents, c > 0 { LabeledContent("davon Versand", value: Fmt.euro(cents: c)) }
                     if let e = offer.expiry { LabeledContent("MHD", value: Fmt.date(e)) }
-                    LabeledContent("Kaufhorizont", value: "\(offer.horizonDays / 7) Wochen")
+                    LabeledContent("Kaufhorizont", value: CountText.weeks(offer.horizonDays / 7))
                     if offer.bargainRule { LabeledContent("Schnäppchenregel", value: "an") }
                 }
             }

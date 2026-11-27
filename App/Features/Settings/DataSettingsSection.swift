@@ -76,11 +76,7 @@ struct DataSettingsSection: View {
             guard let data = try? Data(contentsOf: url) else { message = "Die Datei konnte nicht gelesen werden."; return }
             do {
                 let r = try service.importBackup(data)
-                message = r.total == 0 ? "Nichts Neues: alles aus der Sicherung ist schon vorhanden."
-                    : """
-                    Importiert: \(r.products) Produkte, \(r.batches) Chargen, \(r.movements) Buchungen, \(r.sessions) Sessions.
-                    Einkaufsliste: \(r.shoppingItems), Verlauf: \(r.purchaseEvaluations), Packlisten: \(r.packLists).
-                    """
+                message = CountText.importSummary(r)
             } catch let f as BackupService.Failure { message = f.message } catch { message = "Der Import hat nicht geklappt." }
         }
         .confirmationDialog("Wirklich alle Daten löschen?", isPresented: $confirmDelete, titleVisibility: .visible) {
